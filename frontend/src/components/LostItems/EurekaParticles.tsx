@@ -16,12 +16,13 @@ interface Particle {
   };
 }
 
+const letters = ['E', 'U', 'R', 'E', 'K', 'A'];
+
 const EurekaParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const isTouchingRef = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
-  const letters = ['E', 'U', 'R', 'E', 'K', 'A'];
   const getLetterSpacing = (index: number) => {
     if (index === 4) return 10;
     return 15;
@@ -82,7 +83,7 @@ const EurekaParticles: React.FC = () => {
       return scale;
     }
 
-    function createParticle(scale: number): Particle | null {
+    function createParticle(): Particle | null {
       if (!ctx || !canvas || !textImageData) return null;
 
       const data = textImageData.data;
@@ -112,11 +113,11 @@ const EurekaParticles: React.FC = () => {
       return null;
     }
 
-    function createInitialParticles(scale: number) {
+    function createInitialParticles() {
       const baseParticleCount = isMobile ? 3000 : 6000;
       const particleCount = Math.floor(baseParticleCount * Math.sqrt((canvas.width * canvas.height) / (1920 * 600)));
       for (let i = 0; i < particleCount; i++) {
-        const particle = createParticle(scale);
+        const particle = createParticle();
         if (particle) particles.push(particle);
       }
     }
@@ -124,7 +125,7 @@ const EurekaParticles: React.FC = () => {
     let animationFrameId: number;
     let time = 0;
 
-    function animate(scale: number) {
+    function animate() {
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#f8f9fa';
@@ -167,7 +168,7 @@ const EurekaParticles: React.FC = () => {
 
         p.life--;
         if (p.life <= 0) {
-          const newParticle = createParticle(scale);
+          const newParticle = createParticle();
           if (newParticle) {
             particles[i] = newParticle;
           } else {
@@ -180,22 +181,22 @@ const EurekaParticles: React.FC = () => {
       const baseParticleCount = isMobile ? 3000 : 6000;
       const targetParticleCount = Math.floor(baseParticleCount * Math.sqrt((canvas.width * canvas.height) / (1920 * 600)));
       while (particles.length < targetParticleCount) {
-        const newParticle = createParticle(scale);
+        const newParticle = createParticle();
         if (newParticle) particles.push(newParticle);
       }
 
-      animationFrameId = requestAnimationFrame(() => animate(scale));
+      animationFrameId = requestAnimationFrame(() => animate());
     }
 
-    const scale = createTextImage();
-    createInitialParticles(scale);
-    animate(scale);
+    createTextImage();
+    createInitialParticles();
+    animate();
 
     const handleResize = () => {
       updateCanvasSize();
-      const newScale = createTextImage();
+      createTextImage();
       particles = [];
-      createInitialParticles(newScale);
+      createInitialParticles();
     };
 
     const handleMove = (x: number, y: number) => {

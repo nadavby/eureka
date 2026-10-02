@@ -49,7 +49,7 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `JWT ${response.data.accessToken}`;
           return axios(originalRequest);
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
         window.location.href = "/login";

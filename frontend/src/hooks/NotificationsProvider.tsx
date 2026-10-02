@@ -1,46 +1,13 @@
 /** @format */
 
-import {
-  useCallback,
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  ReactNode,
-} from "react";
+import { useCallback, useState, useEffect, ReactNode } from "react";
 import socketService from "../services/notification.socket.service";
 import notificationService, {
   INotification,
   CanceledError,
 } from "../services/notification-service";
 import { useAuth } from "./useAuth";
-
-interface NotificationsContextType {
-  notifications: INotification[];
-  error: string | null;
-  isLoading: boolean;
-  addNotification: (notification: INotification) => void;
-  removeNotification: (notificationId: string) => Promise<void>;
-  clearNotifications: () => void;
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  unreadCount: number;
-}
-
-const NotificationsContext = createContext<NotificationsContextType | null>(
-  null
-);
-
-export const useNotifications = () => {
-  const context = useContext(NotificationsContext);
-  if (!context) {
-    throw new Error(
-      "useNotifications must be used within a NotificationsProvider"
-    );
-  }
-  return context;
-};
+import { NotificationsContext } from "./useNotifications";
 
 interface NotificationsProviderProps {
   children: ReactNode;

@@ -16,7 +16,6 @@ import itemService, { Item } from '../../services/item-service';
 import { 
   Map, 
   AdvancedMarker,
-  Pin,
   APIProvider
 } from "@vis.gl/react-google-maps";
 import './ItemDetail.css';
@@ -35,7 +34,7 @@ const defaultCenter = {
 const ItemDetail: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  useAuth(); // keeps the hook's auth-check side effects; currentUser is not needed here
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

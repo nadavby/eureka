@@ -4,7 +4,6 @@ import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faUserCircle,
   faSearch,
   faUpload,
   faLightbulb,

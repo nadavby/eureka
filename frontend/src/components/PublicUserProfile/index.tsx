@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faEnvelope, 
   faPhone, 
-  faUser,
   faExclamationCircle 
 } from '@fortawesome/free-solid-svg-icons';
 import defaultAvatar from "../../assets/avatar.png";

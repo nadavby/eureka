@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import chatSocketService, { IChatMessage, IUserChatInfo } from '../../services/chat.socket.service';
-import userService, { IUser } from '../../services/user-service';
+import userService from '../../services/user-service';
 import matchService from '../../services/match-service';
 import itemService, { Item } from '../../services/item-service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,6 +25,12 @@ const Chats: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  // Latest onlineUsers for socket handlers, without re-subscribing on every status change
+  const onlineUsersRef = useRef(onlineUsers);
+
+  useEffect(() => {
+    onlineUsersRef.current = onlineUsers;
+  }, [onlineUsers]);
 
   useEffect(() => {
     if (!currentUser?._id) return;
@@ -122,7 +128,7 @@ const Chats: React.FC = () => {
             otherUserId: message.senderId === currentUser._id ? message.receiverId : message.senderId,
             lastMessage: message,
             unreadCount: message.senderId === currentUser._id ? 0 : 1,
-            isOnline: onlineUsers.has(message.senderId === currentUser._id ? message.receiverId : message.senderId)
+            isOnline: onlineUsersRef.current.has(message.senderId === currentUser._id ? message.receiverId : message.senderId)
           };
           return [...prevChats, newChat];
         }

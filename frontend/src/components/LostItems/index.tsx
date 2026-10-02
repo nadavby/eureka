@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /** @format */
 
 import { FC, useState, useEffect, useMemo } from "react";
@@ -9,28 +8,25 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
-  faMapMarkerAlt,
   faCalendarAlt,
   faTag,
   faPlus,
-  faFilter,
   faMapMarked,
   faHandHoldingHeart,
   faLightbulb
 } from "@fortawesome/free-solid-svg-icons";
-import itemService from "../../services/item-service";
 import EurekaParticles from './EurekaParticles';
 import './styles.css';
 
 type SortOption = 'newest' | 'oldest' | 'category';
 
 const LostItems: FC = () => {
-  const { items, isLoading, error, setItems, refreshItems } = useLostItems();
-  const { isAuthenticated, loading: authLoading, currentUser } = useAuth();
+  const { items, isLoading, error, refreshItems } = useLostItems();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sortOption, setSortOption] = useState<SortOption>('newest');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
@@ -58,20 +54,6 @@ const LostItems: FC = () => {
     return null;
   }
 
-  const handleDelete = async (itemId: string) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-
-    try {
-      const { request } = itemService.deleteItem(itemId);
-      await request;
-      setItems((prevItems: Item[]) =>
-        prevItems.filter((item) => item._id !== itemId)
-      );
-    } catch (error) {
-      console.error("Error deleting item:", error);
-    }
-  };
-
   const handleSortChange = (option: SortOption) => {
     setSortOption(option);
     setDropdownOpen(false);
@@ -89,31 +71,6 @@ const LostItems: FC = () => {
       console.error("Error formatting date:", date, error);
       return "N/A";
     }
-  };
-
-  const formatLocation = (location: any): string => {
-    if (!location) return "Unknown location";
-    
-    if (typeof location === 'string') return location;
-    
-    if (location && typeof location === 'object') {
-      if (typeof location === 'string') {
-        try {
-          const parsedLocation = JSON.parse(location);
-          if (parsedLocation.lat && parsedLocation.lng) {
-            return `Lat: ${parsedLocation.lat.toFixed(4)}, Lng: ${parsedLocation.lng.toFixed(4)}`;
-          }
-        } catch (e) {
-            console.error("Error parsing location:", e);
-        }
-      }
-      
-      if (location.lat !== undefined && location.lng !== undefined) {
-        return `Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}`;
-      }
-    }
-    
-    return String(location);
   };
 
   const getSortedAndFilteredItems = () => {

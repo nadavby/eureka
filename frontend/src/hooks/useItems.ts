@@ -26,7 +26,7 @@ export const useLostItems = () => {
     setError(null);
 
     try {
-      const { request, abort } = itemService.getAllLostItems();
+      const { request } = itemService.getAllLostItems();
       const response = await request;
       
       if (mounted.current) {
