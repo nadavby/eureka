@@ -2,13 +2,13 @@
 import { Server, Namespace } from "socket.io";
 import { Server as HttpServer } from "http";
 import { initChatSocket } from "./chat.socket.service";
+import { getAllowedOrigins } from "../config/cors";
 
 let io: Server;
 let chatNamespace: Namespace;
 
 export const initSocket = (server: HttpServer) => {
-  const origins = ["http://localhost:3002", "http://localhost:5173"];
-  if (process.env.DOMAIN_BASE) origins.push(process.env.DOMAIN_BASE);
+  const origins = getAllowedOrigins();
 
   io = new Server(server, {
     cors: {

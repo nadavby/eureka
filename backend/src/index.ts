@@ -6,19 +6,20 @@ import https from "https";
 import fs from "fs";
 import { initSocket } from "./services/notification.socket.service";
 
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 initApp().then((app) => {
   let server;
-  if (process.env.NODE_ENV !== "production") {
-    console.log("development");
-    server = http.createServer(app);
-  } else {
+  // TLS is normally terminated by a reverse proxy / load balancer;
+  // serve HTTPS directly only when certificate paths are provided.
+  if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH) {
     const options = {
-      key: fs.readFileSync("./client-key.pem"),
-      cert: fs.readFileSync("./client-cert.pem"),
+      key: fs.readFileSync(process.env.SSL_KEY_PATH),
+      cert: fs.readFileSync(process.env.SSL_CERT_PATH),
     };
     server = https.createServer(options, app);
+  } else {
+    server = http.createServer(app);
   }
 
   // Initialize Socket.IO
