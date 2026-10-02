@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+backend/public/items/*
+backend/public/users/*
+!backend/public/**/.gitkeep

@@ -1,0 +1,169 @@
+.app {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Main content area styles */
+  .app > div:not(.navigation) {
+    flex: 1;
+    width: 100%;
+  }
+  
+  /* Component container styles */
+  .upload-container,
+  .chats-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    margin-top: 20px;
+    overflow-y: auto;
+  }
+
+  /* Lost Items specific styles */
+  .lost-items-hero {
+    padding: 2rem 0 3rem;
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lost-items-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/></svg>') center/50px 50px repeat;
+    opacity: 0.1;
+  }
+
+  .lost-items-search-bar {
+    margin-bottom: -1.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .lost-items-content {
+    padding-top: 3rem;
+    background-color: #f8f9fa;
+  }
+
+  /* Item Cards */
+  .item-card {
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .item-card .card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .item-card .card-img-top {
+    transition: transform 0.5s ease;
+  }
+
+  .item-card:hover .card-img-top {
+    transform: scale(1.05);
+  }
+
+  .item-card .card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+
+  .item-card:hover .card-overlay {
+    transform: translateY(0);
+  }
+
+  .item-card .card-body {
+    padding: 1.25rem;
+  }
+
+  .item-card .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
+  }
+
+  .item-card .badge-resolved {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background: rgba(25, 135, 84, 0.9);
+    color: white;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Stats Cards */
+  .stats-card {
+    border: none;
+    border-radius: 15px;
+    background: white;
+    transition: all 0.3s ease;
+  }
+
+  .stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(13, 110, 253, 0.1);
+  }
+
+  .stats-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+
+  .stats-primary {
+    background: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+  }
+
+  .stats-success {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+  }
+
+  .stats-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+  }
+
+  /* Responsive container */
+  .container-max {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    width: 100%;
+  }

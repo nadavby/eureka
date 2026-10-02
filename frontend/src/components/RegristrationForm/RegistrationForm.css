@@ -1,0 +1,98 @@
+.PhoneInput {
+  /* Match Bootstrap form-control */
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.PhoneInput--focus {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.PhoneInputInput {
+  border: none;
+  background: none;
+  padding: 0;
+  outline: none;
+  font: inherit;
+  width: 100%;
+}
+
+.PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  margin-right: 0.75rem;
+  padding-right: 0.75rem;
+  border-right: 1px solid #ced4da;
+  overflow: hidden;
+  height: 1.5em;
+}
+
+.PhoneInputCountryIcon {
+  width: 1.5em;
+  height: 1.5em;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.PhoneInputCountryIcon--border {
+  box-shadow: none;
+  border: none;
+  background: none;
+}
+
+.PhoneInputCountryIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: none;
+}
+
+/* Invalid state styling */
+.phone-input-wrapper.is-invalid .PhoneInput {
+  border-color: #dc3545;
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.phone-input-wrapper.is-invalid .PhoneInput:focus-within {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.phone-input-wrapper {
+  position: relative;
+  display: block;
+} 
