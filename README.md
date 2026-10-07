@@ -2,30 +2,41 @@
 
 [![CI](https://github.com/nadavby/eureka/actions/workflows/ci.yml/badge.svg)](https://github.com/nadavby/eureka/actions/workflows/ci.yml)
 
-Eureka reunites people with lost items. Users report a **lost** or **found** item with a photo and location; the system analyzes the image with computer vision, then uses an LLM to decide whether a lost item and a found item are the same object, and notifies both owners in real time so they can chat and confirm the match.
+Eureka reunites people with lost items. Users report a **lost** or **found** item with a photo and location. In the background, Gemini describes the object, a multimodal embedding of the photo and its description finds look-alike candidates, and a second model compares the best candidates photo-to-photo. Both owners are notified in real time and can chat to confirm.
 
 ## How matching works
 
 ```
-upload photo ──► Google Cloud Vision ──► labels / objects / text / logos
-                                              │
-new item ──► candidate filter ────────────────┤   same category
-             (cheap, deterministic)           │   found date ≥ lost date
-                                              │   distance ≤ 8 km (haversine)
-                                              ▼
-                              Gemini evaluates each candidate pair
-                              → { confidenceScore 0-100, reasoning } (JSON)
-                                              │
-                         score ≥ 70 ──► match saved ──► Socket.IO notification
-                                                       ──► real-time chat ──► owners confirm
+POST /items ──► item saved (matchingStatus: analyzing) ──► 201 in ~20 ms
+                         │
+                         ▼  job queue (MongoDB, survives restarts)
+ analyze-item   Gemini Flash-Lite: photo + user fields ──► structured attributes (JSON schema)
+                gemini-embedding-2: photo + canonical text ──► one 768-d vector
+                         │
+                         ▼
+ find-matches   Atlas Vector Search: 30 nearest items of the opposite type, same category
+                rules: found date ≥ lost date − 1 day · distance ≤ 10 km · still open
+                Gemini Flash: both photos side by side, top 5 only
+                    ──► { score 0-100, verdict, reasons[], conflicts[] }
+                         │
+          score ≥ 70 ──► match upserted by pairKey (idempotent) ──► notifications + Socket.IO
+                         │
+                         ▼
+                item_status events: analyzing → searching → done (matchCount) / failed
 ```
 
-The deterministic filter runs first so that only plausible pairs reach the LLM. That keeps both latency and API cost down.
+Design choices:
+
+- **The upload never waits for AI.** Work runs on a small durable job queue (`backend/src/jobs`). Claims are atomic, the locks of a crashed worker expire, failures retry with exponential backoff, and quota errors are rescheduled without spending an attempt.
+- **Cheap steps first.** Vector search and plain rules narrow the candidates before any expensive model call. Only 5 pairs per item reach the reranker, so this stays inside the Gemini free tier. A local rate limiter holds jobs back before the provider starts returning 429s.
+- **Embeddings see the photo.** The vector is computed from the image *and* the canonical attribute text together, so two photos of the same object land close together even when their owners describe it differently.
+- **The model is not trusted blindly.** Structured output is validated again with Zod, and an invalid reply is retried once and then fails visibly; it is never silently scored as 0. The prompts tell the model to ignore instructions embedded in photos or user text.
+- **Measured, not guessed.** `npm run eval:matching` reports precision, recall and F1 on labelled pairs (see [backend/eval](backend/eval/README.md)).
 
 ## Features
 
 - Lost / found item reporting with photo upload, map location picker and item metadata (category, brand, colors, materials)
-- Two-stage matching pipeline: Vision feature extraction, rule-based pre-filtering, LLM pair evaluation with structured JSON output
+- Background AI matching pipeline: structured extraction, multimodal vector search, rule filter and photo-to-photo reranking with explanations
 - Real-time notifications and 1:1 chat (Socket.IO namespaces)
 - Match confirmation flow and resolved-item tracking
 - JWT auth with refresh tokens and Google Sign-In
@@ -47,7 +58,7 @@ The deterministic filter runs first so that only plausible pairs reach the LLM. 
 |---|---|
 | Frontend | React 18, TypeScript, Vite, React Router, React Hook Form + Zod, Tailwind / Bootstrap, Google Maps |
 | Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Zod, pino, helmet, Multer, Swagger |
-| AI | Google Cloud Vision API, Google Gemini |
+| AI | Gemini (@google/genai): Flash-Lite extraction, Flash reranking, gemini-embedding-2; MongoDB Atlas Vector Search |
 | Testing | Jest + Supertest, mongodb-memory-server, socket.io-client |
 | DevOps | Docker (multi-stage images), Docker Compose, GitHub Actions CI, GitHub Container Registry |
 
@@ -63,7 +74,7 @@ frontend/  React SPA
 ### With Docker (recommended)
 
 ```bash
-cp backend/.env.example backend/.env    # add GEMINI_API_KEY and GOOGLE_CLOUD_VISION_API_KEY
+cp backend/.env.example backend/.env    # add GEMINI_API_KEY (matching is skipped without it)
 docker compose up --build
 ```
 
@@ -78,7 +89,7 @@ MongoDB data and uploaded images are kept in named Docker volumes.
 
 ### Without Docker
 
-Prerequisites: Node.js 20+, MongoDB, and Google Cloud API keys (Vision, Gemini, Maps).
+Prerequisites: Node.js 20+, MongoDB, and a Gemini API key from Google AI Studio (free tier). Locally, vector search runs in memory; production uses Atlas Vector Search with the index in `backend/atlas/vector-index.json`.
 
 ```bash
 # backend

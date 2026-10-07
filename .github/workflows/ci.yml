@@ -25,7 +25,6 @@ jobs:
       DOMAIN_BASE: http://localhost:3000
       # Dummy keys: tests mock the Google AI services
       GEMINI_API_KEY: ci-dummy
-      GOOGLE_CLOUD_VISION_API_KEY: ci-dummy
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

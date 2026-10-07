@@ -21,7 +21,6 @@ const schema = z.object({
   VECTOR_SEARCH: z.enum(["memory", "atlas"]).optional(),
   MATCH_RADIUS_KM: z.coerce.number().positive().default(10),
   MATCH_THRESHOLD: z.coerce.number().min(0).max(100).default(70),
-  GOOGLE_CLOUD_VISION_API_KEY: z.string().default(""),
   GOOGLE_CLIENT_ID: z.string().default(""),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
   SSL_KEY_PATH: z.string().optional(),
