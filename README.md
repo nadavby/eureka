@@ -49,6 +49,7 @@ Design choices:
 - **Ownership checks.** Only the users an item, match, notification or profile belongs to can read or change it. Contact details are shared only between users who have a match.
 - **Authenticated sockets.** Both Socket.IO namespaces require an access token in the handshake. Chat rooms are limited to the two participants of a match, and the server sets sender and receiver.
 - **Token hygiene.** Access tokens are short-lived and refresh tokens are typed and rotated. Reusing a revoked refresh token signs the user out everywhere.
+- **Photo privacy.** Phone photos embed the GPS position where they were taken. Every upload is decoded, its format checked from the bytes (a renamed file or an SVG is rejected) and re-encoded to WebP at most 1600 px, with all EXIF and GPS metadata dropped, before it is stored in Cloudinary.
 - **Input and transport.** Zod validation on every route, image-only uploads up to 5 MB, body size limits, helmet headers, a CORS allow-list, and rate limits on the auth and upload routes.
 - **Observability.** Structured JSON logs (pino) with request ids. Credentials are redacted from logs, and error responses never leak internals.
 
@@ -57,7 +58,7 @@ Design choices:
 | Layer | Tech |
 |---|---|
 | Frontend | React 18, TypeScript, Vite, React Router, React Hook Form + Zod, Tailwind / Bootstrap, Google Maps |
-| Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Zod, pino, helmet, Multer, Swagger |
+| Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Zod, pino, helmet, Multer, sharp, Cloudinary, Swagger |
 | AI | Gemini (@google/genai): Flash-Lite extraction, Flash reranking, gemini-embedding-2; MongoDB Atlas Vector Search |
 | Testing | Jest + Supertest, mongodb-memory-server, socket.io-client |
 | DevOps | Docker (multi-stage images), Docker Compose, GitHub Actions CI, GitHub Container Registry |
