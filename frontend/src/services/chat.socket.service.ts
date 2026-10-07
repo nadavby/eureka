@@ -30,6 +30,8 @@ class ChatSocketService {
     }
 
     this.socket = io(`${API_URL}/chat`, {
+      // read on every (re)connect so a refreshed token is picked up
+      auth: (cb) => cb({ token: localStorage.getItem('accessToken') }),
       withCredentials: true,
     });
 
