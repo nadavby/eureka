@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai";
+import { config } from "../lib/config";
 import { logger } from "../lib/logger";
 import { IItem } from "../models/item_model";
 
@@ -75,18 +76,15 @@ interface MatchEvaluationRequest {
 }
 
 class GeminiService {
-  private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
-  
+  private model?: GenerativeModel;
+
+  // Without a key the app still runs; matching is skipped instead of crashing at startup.
   constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
+    if (!config.GEMINI_API_KEY) {
+      logger.warn("GEMINI_API_KEY is not set: AI matching is disabled");
+      return;
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash"  // Using flash model for better quota limits
-    });
+    this.model = new GoogleGenerativeAI(config.GEMINI_API_KEY).getGenerativeModel({ model: "gemini-1.5-flash" });
   }
   
   private extractVisionSummary(visionApiData: VisionApiData | undefined): VisionSummary {
@@ -188,6 +186,7 @@ Analyze the items and return ONLY a JSON response in the format:
         } as Part
       ];
 
+      if (!this.model) return { confidenceScore: 0, reasoning: "AI matching is disabled" };
       const result = await this.model.generateContent(parts);
       const responseText = result.response.text().trim();
       

@@ -3,9 +3,9 @@ FROM node:20-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
-RUN npx tsc
+RUN npx tsc -p tsconfig.build.json
 
 # ---- runtime: production dependencies + compiled output only ----
 FROM node:20-slim

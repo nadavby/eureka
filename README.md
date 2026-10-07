@@ -32,14 +32,23 @@ The deterministic filter runs first so that only plausible pairs reach the LLM. 
 - Interactive map of lost items (Google Maps)
 - REST API documented with Swagger (`/api-docs`), Jest integration tests
 
+## Security
+
+- **Identity only from the token.** Every write takes the user from the verified JWT, never from the request body, query or URL.
+- **Ownership checks.** Only the users an item, match, notification or profile belongs to can read or change it. Contact details are shared only between users who have a match.
+- **Authenticated sockets.** Both Socket.IO namespaces require an access token in the handshake. Chat rooms are limited to the two participants of a match, and the server sets sender and receiver.
+- **Token hygiene.** Access tokens are short-lived and refresh tokens are typed and rotated. Reusing a revoked refresh token signs the user out everywhere.
+- **Input and transport.** Zod validation on every route, image-only uploads up to 5 MB, body size limits, helmet headers, a CORS allow-list, and rate limits on the auth and upload routes.
+- **Observability.** Structured JSON logs (pino) with request ids. Credentials are redacted from logs, and error responses never leak internals.
+
 ## Tech stack
 
 | Layer | Tech |
 |---|---|
 | Frontend | React 18, TypeScript, Vite, React Router, React Hook Form + Zod, Tailwind / Bootstrap, Google Maps |
-| Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Multer, Swagger |
+| Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Zod, pino, helmet, Multer, Swagger |
 | AI | Google Cloud Vision API, Google Gemini |
-| Testing | Jest + Supertest |
+| Testing | Jest + Supertest, mongodb-memory-server, socket.io-client |
 | DevOps | Docker (multi-stage images), Docker Compose, GitHub Actions CI, GitHub Container Registry |
 
 ## Project structure
@@ -77,6 +86,7 @@ cd backend
 cp .env.example .env      # fill in the keys
 npm install
 npm run dev               # http://localhost:3000
+npm test                  # starts its own in-memory MongoDB; no database or API keys needed
 
 # frontend
 cd frontend
@@ -89,7 +99,7 @@ npm run dev               # http://localhost:5173
 
 Every push and pull request runs [GitHub Actions](.github/workflows/ci.yml):
 
-1. **Backend:** ESLint, TypeScript type-check, and Jest integration tests against a MongoDB service container. Google AI services are mocked, so tests are deterministic and need no API keys.
+1. **Backend:** ESLint, TypeScript type-check, and Jest unit, integration and socket tests against an in-memory MongoDB. Google AI services are mocked, so tests are deterministic and need no API keys.
 2. **Frontend:** ESLint and a production build.
 3. **Docker:** builds both images with layer caching. On `main`, images are pushed to GitHub Container Registry (`ghcr.io/nadavby/eureka-backend`, `ghcr.io/nadavby/eureka-frontend`), tagged `latest` and with the commit SHA.
 
