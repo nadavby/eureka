@@ -1,6 +1,13 @@
 import express from "express";
-const router = express.Router();
 import authController from "../controllers/auth_controller";
+import { asyncHandler } from "../lib/async-handler";
+import { optionalAuth, requireAuth } from "../middleware/auth";
+import { authLimiter } from "../middleware/security";
+import { validate } from "../middleware/validate";
+import { googleBody, loginBody, refreshBody, registerBody, updateUserBody } from "../schemas/auth.schema";
+import { idParams } from "../schemas/common";
+
+const router = express.Router();
 
 /**
  * @swagger
@@ -90,7 +97,7 @@ import authController from "../controllers/auth_controller";
  *       400:
  *         description: Registration error
  */
-router.post("/register", authController.register);
+router.post("/register", authLimiter, validate({ body: registerBody }), asyncHandler(authController.register));
 
 /**
  * @swagger
@@ -133,7 +140,7 @@ router.post("/register", authController.register);
  *       500:
  *         description: Server error
  */
-router.post("/google", authController.googleSignIn);
+router.post("/google", authLimiter, validate({ body: googleBody }), asyncHandler(authController.googleSignIn));
 
 /**
  * @swagger
@@ -178,7 +185,7 @@ router.post("/google", authController.googleSignIn);
  *       400:
  *         description: Invalid credentials
  */
-router.post("/login", authController.login);
+router.post("/login", authLimiter, validate({ body: loginBody }), asyncHandler(authController.login));
 
 /**
  * @swagger
@@ -217,7 +224,7 @@ router.post("/login", authController.login);
  *       500:
  *         description: Server error
  */
-router.post("/refresh", authController.refresh);
+router.post("/refresh", authLimiter, validate({ body: refreshBody }), asyncHandler(authController.refresh));
 
 /**
  * @swagger
@@ -245,7 +252,7 @@ router.post("/refresh", authController.refresh);
  *       500:
  *         description: Server error
  */
-router.post("/logout", authController.logout);
+router.post("/logout", validate({ body: refreshBody }), asyncHandler(authController.logout));
 
 /**
  * @swagger
@@ -277,32 +284,8 @@ router.post("/logout", authController.logout);
  *       400:
  *         description: Bad request
  */
-router.get("/:id", authController.getUserById);
+router.get("/:id", optionalAuth, validate({ params: idParams }), asyncHandler(authController.getUserById));
 
-/**
- * @swagger
- * /auth:
- *   get:
- *     summary: Get all users
- *     tags: [Auth]
- *     description: Retrieve a list of all users.
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: A list of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
- *       401:
- *         description: Unauthorized
- *       400:
- *         description: Bad request
- */
-router.get("/", authController.getAllUsers);
 
 /**
  * @swagger
@@ -347,7 +330,7 @@ router.get("/", authController.getAllUsers);
  *       400:
  *         description: Bad request
  */
-router.put("/:id", authController.updateUser);
+router.put("/:id", requireAuth, validate({ params: idParams, body: updateUserBody }), asyncHandler(authController.updateUser));
 
 /**
  * @swagger
@@ -375,6 +358,6 @@ router.put("/:id", authController.updateUser);
  *       400:
  *         description: Bad request
  */
-router.delete("/:id", authController.deleteUser);
+router.delete("/:id", requireAuth, validate({ params: idParams }), asyncHandler(authController.deleteUser));
 
 export default router;

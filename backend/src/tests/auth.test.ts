@@ -1,11 +1,11 @@
-/** @format */
-
 import request from "supertest";
 import mongoose from "mongoose";
-import userModel, { iUser } from "../models/user_model";
-import initApp from "../server";
-import { Express } from "express";
 import jwt from "jsonwebtoken";
+import { Express } from "express";
+import initApp from "../server";
+import userModel from "../models/user_model";
+import { config } from "../lib/config";
+import { signRefreshToken } from "../lib/tokens";
 
 // Google sign-in verification is mocked so no request ever reaches Google.
 const mockVerifyIdToken = jest.fn();
@@ -16,10 +16,18 @@ jest.mock("google-auth-library", () => ({
 }));
 
 let app: Express;
-
-// Every user created by this file has an e-mail on this domain, so cleanup
-// never touches data that belongs to other test files.
+// Every user created here has an e-mail on this domain, so cleanup never touches other test files' data.
 const userEmails = /@auth\.test$/;
+
+const user = {
+  email: "testuser@auth.test",
+  password: "password123",
+  userName: "authTestUser",
+  phoneNumber: "+972500000000",
+};
+let userId: string;
+let accessToken: string;
+let refreshToken: string;
 
 beforeAll(async () => {
   app = await initApp();
@@ -31,562 +39,193 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-const baseUrl = "/auth";
-
-const testUser = {
-  email: "testUser@auth.test",
-  password: "123456",
-  userName: "authTestUser",
-  phoneNumber: "+972500000000",
-} as Omit<iUser, "refreshToken"> & {
-  accessToken?: string;
-  refreshToken?: string;
-};
-
-// Any route behind authMiddleware works here; GET /notification is a cheap one.
-const protectedRoute = () => "/notification?userId=" + testUser._id;
-
-describe("Auth Tests", () => {
-  test("Auth test registration", async () => {
-    const response = await request(app).post(baseUrl + "/register").send(testUser);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.email).toBe(testUser.email);
-    expect(response.body.phoneNumber).toBe(testUser.phoneNumber);
-    expect(response.body.password).not.toBe(testUser.password);
-    testUser._id = response.body._id;
+describe("registration", () => {
+  it("creates a user without exposing credentials", async () => {
+    const res = await request(app).post("/auth/register").send(user);
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe(user.email);
+    expect(res.body.password).toBeUndefined();
+    expect(res.body.refreshToken).toBeUndefined();
+    userId = res.body._id;
   });
 
-  test("Auth duplicate user name test", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/register")
-      .send({ ...testUser, email: "otherEmail@auth.test" });
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("User name already exists");
+  it("normalizes the email to lower case", async () => {
+    const res = await request(app)
+      .post("/auth/register")
+      .send({ ...user, email: "MixedCase@Auth.Test", userName: "mixedCase" });
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe("mixedcase@auth.test");
   });
 
-  test("Auth duplicate email test", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/register")
-      .send({ ...testUser, userName: "otherUserName" });
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("email already exists");
+  it("rejects duplicate user names and emails with 409", async () => {
+    const dupName = await request(app).post("/auth/register").send({ ...user, email: "other@auth.test" });
+    expect(dupName.status).toBe(409);
+    expect(dupName.body.message).toBe("User name already exists");
+
+    const dupEmail = await request(app).post("/auth/register").send({ ...user, userName: "someoneElse" });
+    expect(dupEmail.status).toBe(409);
+    expect(dupEmail.body.message).toBe("email already exists");
   });
 
-  test("Auth registration without phone number fails", async () => {
-    const response = await request(app).post(baseUrl + "/register").send({
-      email: "nophone@auth.test",
-      password: "123456",
-      userName: "noPhoneUser",
-    });
-    expect(response.statusCode).toBe(400);
-    expect(await userModel.findOne({ email: "nophone@auth.test" })).toBeNull();
+  it("validates the payload", async () => {
+    const weak = await request(app).post("/auth/register").send({ ...user, email: "weak@auth.test", userName: "weak", password: "123" });
+    expect(weak.status).toBe(400);
+    expect(weak.body.error).toBe("VALIDATION_ERROR");
+
+    const noPhone = await request(app).post("/auth/register").send({ email: "nophone@auth.test", password: "password123", userName: "nophone" });
+    expect(noPhone.status).toBe(400);
+  });
+});
+
+describe("login", () => {
+  it("returns a token pair", async () => {
+    const res = await request(app).post("/auth/login").send({ email: user.email, password: user.password });
+    expect(res.status).toBe(200);
+    expect(res.body._id).toBe(userId);
+    accessToken = res.body.accessToken;
+    refreshToken = res.body.refreshToken;
+    expect(accessToken).toBeDefined();
+    expect(refreshToken).toBeDefined();
   });
 
-  test("Auth test login - valid", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/login")
-      .send(testUser);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.accessToken).toBeDefined();
-    expect(response.body.refreshToken).toBeDefined();
-    expect(response.body._id).toBe(testUser._id);
-    testUser.accessToken = response.body.accessToken;
-    testUser.refreshToken = response.body.refreshToken;
+  it("gives the same 401 for a wrong password and an unknown email", async () => {
+    const wrongPassword = await request(app).post("/auth/login").send({ email: user.email, password: "wrong-password" });
+    const unknownEmail = await request(app).post("/auth/login").send({ email: "nobody@auth.test", password: user.password });
+    for (const res of [wrongPassword, unknownEmail]) {
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: "INVALID_CREDENTIALS", message: "Email or password incorrect" });
+    }
   });
 
-  test("Auth test login - invalid password", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/login")
-      .send({ email: testUser.email, password: "wrong password" });
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User or password incorrect");
+  it("the access token opens protected routes", async () => {
+    const res = await request(app).get(`/match/user/${userId}`).set("Authorization", `JWT ${accessToken}`);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("refresh & logout", () => {
+  it("rotates the refresh token", async () => {
+    const res = await request(app).post("/auth/refresh").send({ refreshToken });
+    expect(res.status).toBe(200);
+    expect(res.body.refreshToken).not.toBe(refreshToken);
+    const old = refreshToken;
+    refreshToken = res.body.refreshToken;
+    accessToken = res.body.accessToken;
+
+    // The rotated-out token is now revoked, and reusing it signs the user out everywhere.
+    const reuse = await request(app).post("/auth/refresh").send({ refreshToken: old });
+    expect(reuse.status).toBe(401);
+    const afterReuse = await request(app).post("/auth/refresh").send({ refreshToken });
+    expect(afterReuse.status).toBe(401);
   });
 
-  test("Auth test login - user doesn't exist", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/login")
-      .send({ email: "wronguser@auth.test", password: "123456" });
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User or password incorrect");
+  it("rejects invalid, missing and access-type refresh tokens", async () => {
+    expect((await request(app).post("/auth/refresh").send({ refreshToken: "garbage" })).status).toBe(401);
+    expect((await request(app).post("/auth/refresh").send({})).status).toBe(400);
+    expect((await request(app).post("/auth/refresh").send({ refreshToken: accessToken })).status).toBe(401);
+    const forged = jwt.sign({ _id: userId, typ: "refresh" }, "another-secret-another-secret-123456");
+    expect((await request(app).post("/auth/refresh").send({ refreshToken: forged })).status).toBe(401);
   });
 
-  test("Auth test login - missing environment variables", async () => {
-    const originalEnv = { ...process.env };
-
-    delete process.env.TOKEN_SECRET;
-    const response = await request(app)
-      .post(baseUrl + "/login")
-      .send(testUser);
-    expect(response.statusCode).toBe(500);
-    expect(response.text).toBe("server error");
-
-    delete process.env.TOKEN_EXPIRATION;
-    const response2 = await request(app)
-      .post(baseUrl + "/login")
-      .send(testUser);
-    expect(response2.statusCode).toBe(500);
-    expect(response2.text).toBe("server error");
-
-    process.env = originalEnv;
+  it("returns 404 for a valid token of a deleted user", async () => {
+    const ghost = signRefreshToken(new mongoose.Types.ObjectId().toString());
+    expect((await request(app).post("/auth/refresh").send({ refreshToken: ghost })).status).toBe(404);
   });
 
-  test("Auth test refresh token valid", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response.statusCode).toBe(200);
-    expect(response.body.accessToken).toBeDefined();
-    expect(response.body.refreshToken).toBeDefined();
-    testUser.accessToken = response.body.accessToken;
-    testUser.refreshToken = response.body.refreshToken;
+  it("logs out a session", async () => {
+    const login = await request(app).post("/auth/login").send({ email: user.email, password: user.password });
+    accessToken = login.body.accessToken;
+    const res = await request(app).post("/auth/logout").send({ refreshToken: login.body.refreshToken });
+    expect(res.status).toBe(200);
+    const again = await request(app).post("/auth/refresh").send({ refreshToken: login.body.refreshToken });
+    expect(again.status).toBe(401);
+  });
+});
+
+describe("protected routes", () => {
+  it("reject requests without a valid access token", async () => {
+    const missing = await request(app).get("/notification");
+    expect(missing.status).toBe(401);
+    expect((await request(app).get("/notification").set("Authorization", "Basic abc")).status).toBe(401);
+    expect((await request(app).get("/notification").set("Authorization", "Bearer garbage")).status).toBe(401);
+    const expired = jwt.sign({ _id: userId, typ: "access" }, config.TOKEN_SECRET, { expiresIn: -1 });
+    const res = await request(app).get("/notification").set("Authorization", `Bearer ${expired}`);
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("TOKEN_EXPIRED");
+  });
+});
+
+describe("profile", () => {
+  it("returns my own profile with contact details", async () => {
+    const res = await request(app).get(`/auth/${userId}`).set("Authorization", `Bearer ${accessToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe(user.email);
+    expect(res.body.phoneNumber).toBe(user.phoneNumber);
+    expect(res.body.password).toBeUndefined();
   });
 
-  test("Auth test access protected route with valid token", async () => {
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT " + testUser.accessToken });
-    expect(response.statusCode).toBe(200);
-
-    const response2 = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "Bearer " + testUser.accessToken });
-    expect(response2.statusCode).toBe(200);
+  it("returns 404 for unknown ids and 400 for malformed ids", async () => {
+    expect((await request(app).get(`/auth/${new mongoose.Types.ObjectId()}`)).status).toBe(404);
+    expect((await request(app).get("/auth/not-an-id")).status).toBe(400);
   });
 
-  test("Auth test middleware with missing authorization header", async () => {
-    const response = await request(app).get(protectedRoute());
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toBe("Unauthorized - Missing authorization header");
+  it("updates my user name and password", async () => {
+    const res = await request(app)
+      .put(`/auth/${userId}`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ userName: "renamedUser", password: "newPassword123" });
+    expect(res.status).toBe(200);
+    expect(res.body.userName).toBe("renamedUser");
+    const login = await request(app).post("/auth/login").send({ email: user.email, password: "newPassword123" });
+    expect(login.status).toBe(200);
   });
 
-  test("Auth test middleware with invalid token format", async () => {
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "Invalid" });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toMatch(/^Unauthorized - Invalid authorization format/);
+  it("refuses a user name that is taken", async () => {
+    const res = await request(app)
+      .put(`/auth/${userId}`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ userName: "mixedCase" });
+    expect(res.status).toBe(409);
   });
 
-  test("Auth test middleware with invalid token prefix", async () => {
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "Basic " + testUser.accessToken });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toMatch(/^Unauthorized - Invalid token prefix/);
+  it("deletes my account", async () => {
+    const res = await request(app).delete(`/auth/${userId}`).set("Authorization", `Bearer ${accessToken}`);
+    expect(res.status).toBe(200);
+    expect(await userModel.exists({ _id: userId })).toBeNull();
   });
+});
 
-  test("Auth test middleware with invalid token", async () => {
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT invalidtoken" });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toBe("Unauthorized - Invalid token");
-  });
-
-  test("Auth test middleware with token signed by another secret", async () => {
-    const token = jwt.sign({ _id: testUser._id }, "some-other-secret");
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT " + token });
-    expect(response.statusCode).toBe(401);
-  });
-
-  test("Auth test refresh token not valid", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: "invalid token" });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toBe("Unauthorized");
-  });
-
-  test("Auth test refresh token missing", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({});
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("refreshToken is required");
-  });
-
-  test("Auth test refresh token missing env var", async () => {
-    const tokenSecret = process.env.TOKEN_SECRET;
-    delete process.env.TOKEN_SECRET;
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response.statusCode).toBe(500);
-    expect(response.text).toBe("server error");
-    process.env.TOKEN_SECRET = tokenSecret;
-  });
-
-  test("Auth test refresh token user not found", async () => {
-    const payload = { _id: new mongoose.Types.ObjectId(), random: 1 };
-    const refreshToken = jwt.sign(
-      payload,
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
-    );
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken });
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User not found");
-  });
-
-  test("Auth test refresh token valid but not found in user refreshToken array", async () => {
-    const payload = { _id: testUser._id, random: 1 };
-    const refreshToken = jwt.sign(
-      payload,
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
-    );
-    const response = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken });
-    expect(response.statusCode).toBe(402);
-    expect(response.text).toBe("Unauthorized");
-
-    // Token reuse detection: all of the user's refresh tokens are revoked.
-    const user = await userModel.findById(testUser._id);
-    expect(user?.refreshToken).toEqual([]);
-    const response2 = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response2.statusCode).toBe(402);
-  });
-
-  test("Auth test logout valid", async () => {
-    const login = await request(app).post(baseUrl + "/login").send(testUser);
-    expect(login.statusCode).toBe(200);
-    testUser.accessToken = login.body.accessToken;
-    testUser.refreshToken = login.body.refreshToken;
-
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response.statusCode).toBe(200);
-    expect(response.text).toBe("Logged out");
-
-    // A logged-out refresh token can no longer be used
-    const response2 = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response2.statusCode).not.toBe(200);
-  });
-
-  test("Auth test logout with invalid token", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({ refreshToken: "invalid token" });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toBe("Unauthorized");
-  });
-
-  test("Auth test logout with missing token", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({});
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("refreshToken is required");
-  });
-
-  test("Auth test logout with missing env var", async () => {
-    const tokenSecret = process.env.TOKEN_SECRET;
-    delete process.env.TOKEN_SECRET;
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({ refreshToken: "some token" });
-    expect(response.statusCode).toBe(500);
-    expect(response.text).toBe("server error");
-    process.env.TOKEN_SECRET = tokenSecret;
-  });
-
-  test("Auth test logout with non-existent user", async () => {
-    const payload = { _id: new mongoose.Types.ObjectId(), random: 1 };
-    const refreshToken = jwt.sign(
-      payload,
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
-    );
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({ refreshToken });
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User not found");
-  });
-
-  test("Auth test logout with valid token but not found in user refreshToken array", async () => {
-    const payload = { _id: testUser._id, random: 1 };
-    const refreshToken = jwt.sign(
-      payload,
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
-    );
-    const response = await request(app)
-      .post(baseUrl + "/logout")
-      .send({ refreshToken });
-    expect(response.statusCode).toBe(401);
-    expect(response.text).toBe("Unauthorized");
-  });
-
-  test("Expired access token is rejected", async () => {
-    const response = await request(app)
-      .post(baseUrl + "/login")
-      .send(testUser);
-    expect(response.statusCode).toBe(200);
-    testUser.accessToken = response.body.accessToken;
-    testUser.refreshToken = response.body.refreshToken;
-
-    // Access tokens are issued for 24h, so build one that is already expired.
-    const expiredToken = jwt.sign(
-      { _id: testUser._id, random: 1 },
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: -10 }
-    );
-    const response2 = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT " + expiredToken });
-    expect(response2.statusCode).toBe(401);
-    expect(response2.text).toBe("Unauthorized - Token expired");
-
-    // The client can then get a fresh access token through /auth/refresh
-    const response3 = await request(app)
-      .post(baseUrl + "/refresh")
-      .send({ refreshToken: testUser.refreshToken });
-    expect(response3.statusCode).toBe(200);
-    testUser.accessToken = response3.body.accessToken;
-    testUser.refreshToken = response3.body.refreshToken;
-
-    const response4 = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT " + testUser.accessToken });
-    expect(response4.statusCode).toBe(200);
-  });
-
-  test("Expired access token is refreshed via refresh-token header", async () => {
-    const expiredToken = jwt.sign(
-      { _id: testUser._id, random: 1 },
-      process.env.TOKEN_SECRET as string,
-      { expiresIn: -10 }
-    );
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({
-        authorization: "JWT " + expiredToken,
-        "refresh-token": testUser.refreshToken as string,
-      });
-    expect(response.statusCode).toBe(200);
-    expect(response.headers["new-access-token"]).toBeDefined();
-    expect(response.headers["new-refresh-token"]).toBeDefined();
-    testUser.accessToken = response.headers["new-access-token"];
-    testUser.refreshToken = response.headers["new-refresh-token"];
-
-    // The used refresh token was rotated out
-    const response2 = await request(app)
-      .get(protectedRoute())
-      .set({
-        authorization: "JWT " + expiredToken,
-        "refresh-token": "not-a-valid-refresh-token",
-      });
-    expect(response2.statusCode).toBe(401);
-  });
-
-  test("Middleware fails when TOKEN_SECRET is missing", async () => {
-    const tokenSecret = process.env.TOKEN_SECRET;
-    delete process.env.TOKEN_SECRET;
-    const response = await request(app)
-      .get(protectedRoute())
-      .set({ authorization: "JWT " + testUser.accessToken });
-    process.env.TOKEN_SECRET = tokenSecret;
-    expect(response.statusCode).toBe(500);
-    expect(response.text).toBe(
-      "Server configuration error - TOKEN_SECRET not set"
-    );
-  });
-
-  test("Get all users", async () => {
-    const response = await request(app).get(baseUrl);
-    expect(response.statusCode).toBe(200);
-    expect(Array.isArray(response.body)).toBeTruthy();
-    const emails = response.body.map((u: iUser) => u.email);
-    expect(emails).toContain(testUser.email);
-  });
-
-  test("Get user by ID", async () => {
-    // Create a new user to test with
-    const newUser = await userModel.create({
-      email: "getusertest@auth.test",
-      password: "123456",
-      userName: "getUserTest",
-      phoneNumber: "+972500000000",
-    });
-
-    const response = await request(app).get(baseUrl + "/" + newUser._id);
-    expect(response.statusCode).toBe(200);
-    expect(response.body.email).toBe(newUser.email);
-    expect(response.body.userName).toBe(newUser.userName);
-    expect(response.body.phoneNumber).toBe(newUser.phoneNumber);
-  });
-
-  test("Get user by non-existent ID", async () => {
-    const nonExistentId = new mongoose.Types.ObjectId();
-    const response = await request(app).get(baseUrl + "/" + nonExistentId);
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User not found");
-  });
-
-  test("Get user with invalid ID format", async () => {
-    const response = await request(app).get(baseUrl + "/invalidid");
-    expect(response.statusCode).toBe(400);
-  });
-
-  test("Update user", async () => {
-    const newUser = await userModel.create({
-      email: "updatetest@auth.test",
-      password: "123456",
-      userName: "updateTest",
-      phoneNumber: "+972500000000",
-    });
-
-    const response = await request(app)
-      .put(baseUrl + "/" + newUser._id)
-      .send({ email: "updated@auth.test", phoneNumber: "+972511111111" });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body.email).toBe("updated@auth.test");
-    expect(response.body.phoneNumber).toBe("+972511111111");
-  });
-
-  test("Update user password", async () => {
-    const newUser = await userModel.create({
-      email: "passwordupdate@auth.test",
-      password: "123456",
-      userName: "passwordUpdate",
-      phoneNumber: "+972500000000",
-    });
-
-    const response = await request(app)
-      .put(baseUrl + "/" + newUser._id)
-      .send({ password: "newpassword" });
-
-    expect(response.statusCode).toBe(200);
-
-    // Check that password was hashed
-    const updatedUser = await userModel.findById(newUser._id);
-    expect(updatedUser?.password).not.toBe("newpassword");
-  });
-
-  test("Update user with non-existent ID", async () => {
-    const nonExistentId = new mongoose.Types.ObjectId();
-    const response = await request(app)
-      .put(baseUrl + "/" + nonExistentId)
-      .send({ email: "updated2@auth.test" });
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User not found");
-  });
-
-  test("Update user with existing username", async () => {
-    const user1 = await userModel.create({
-      email: "user1update@auth.test",
-      password: "123456",
-      userName: "user1update",
-      phoneNumber: "+972500000000",
-    });
-
-    await userModel.create({
-      email: "user2update@auth.test",
-      password: "123456",
-      userName: "user2update",
-      phoneNumber: "+972500000000",
-    });
-
-    const response = await request(app)
-      .put(baseUrl + "/" + user1._id)
-      .send({ userName: "user2update" });
-
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("User name already exists");
-  });
-
-  test("Update user with invalid ID format", async () => {
-    const response = await request(app)
-      .put(baseUrl + "/invalidid")
-      .send({ email: "updated3@auth.test" });
-    expect(response.statusCode).toBe(400);
-  });
-
-  test("Delete user", async () => {
-    const newUser = await userModel.create({
-      email: "todelete@auth.test",
-      password: "123456",
-      userName: "userToDelete",
-      phoneNumber: "+972500000000",
-    });
-
-    const response = await request(app).delete(baseUrl + "/" + newUser._id);
-    expect(response.statusCode).toBe(200);
-    expect(response.text).toBe("User deleted");
-
-    const deletedUser = await userModel.findById(newUser._id);
-    expect(deletedUser).toBeNull();
-  });
-
-  test("Delete non-existent user", async () => {
-    const nonExistentId = new mongoose.Types.ObjectId();
-    const response = await request(app).delete(baseUrl + "/" + nonExistentId);
-    expect(response.statusCode).toBe(404);
-    expect(response.text).toBe("User not found");
-  });
-
-  test("delete user fail", async () => {
-    const response = await request(app).delete(baseUrl + "/123");
-    expect(response.statusCode).not.toBe(200);
-  });
-
-  test("Google sign-in with invalid token", async () => {
+describe("google sign-in", () => {
+  it("rejects an invalid credential", async () => {
     mockVerifyIdToken.mockRejectedValueOnce(new Error("Wrong number of segments"));
-    const response = await request(app)
-      .post(baseUrl + "/google")
-      .send({ credential: "invalid_token" });
-
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("Wrong number of segments");
+    const res = await request(app).post("/auth/google").send({ credential: "invalid_token" });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Invalid Google credential");
   });
 
-  test("Google sign-in with token without email", async () => {
+  it("rejects a token without an email", async () => {
     mockVerifyIdToken.mockResolvedValueOnce({ getPayload: () => ({}) });
-    const response = await request(app)
-      .post(baseUrl + "/google")
-      .send({ credential: "token_without_email" });
-
-    expect(response.statusCode).toBe(400);
-    expect(response.text).toBe("Invalid credentials");
+    const res = await request(app).post("/auth/google").send({ credential: "token_without_email" });
+    expect(res.status).toBe(400);
   });
 
-  test("Google sign-in creates a user and returns tokens", async () => {
-    const payload = {
-      email: "googleuser@auth.test",
-      picture: "http://example.com/avatar.png",
-    };
+  it("creates the account once and reuses it", async () => {
+    const payload = { email: "googleuser@auth.test", name: "Google User", picture: "http://example.com/avatar.png" };
     mockVerifyIdToken.mockResolvedValue({ getPayload: () => payload });
 
-    const response = await request(app)
-      .post(baseUrl + "/google")
-      .send({ credential: "valid_google_token" });
-    expect(response.statusCode).toBe(200);
-    expect(response.body.email).toBe(payload.email);
-    expect(response.body.imgUrl).toBe(payload.picture);
-    expect(response.body.accessToken).toBeDefined();
-    expect(response.body.refreshToken).toBeDefined();
-    expect(mockVerifyIdToken).toHaveBeenLastCalledWith(
-      expect.objectContaining({ idToken: "valid_google_token" })
-    );
+    const first = await request(app).post("/auth/google").send({ credential: "valid_google_token" });
+    expect(first.status).toBe(200);
+    expect(first.body.email).toBe(payload.email);
+    expect(first.body.userName).toBe("Google User");
+    expect(first.body.imgUrl).toBe(payload.picture);
+    expect(first.body.accessToken).toBeDefined();
 
-    // Signing in again reuses the same account
-    const response2 = await request(app)
-      .post(baseUrl + "/google")
-      .send({ credential: "valid_google_token" });
-    expect(response2.statusCode).toBe(200);
-    expect(response2.body._id).toBe(response.body._id);
+    const second = await request(app).post("/auth/google").send({ credential: "valid_google_token" });
+    expect(second.body._id).toBe(first.body._id);
     expect(await userModel.countDocuments({ email: payload.email })).toBe(1);
+
+    // a Google account cannot be logged into with any password
+    const login = await request(app).post("/auth/login").send({ email: payload.email, password: " " });
+    expect(login.status).toBe(401);
   });
 });

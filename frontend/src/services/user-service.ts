@@ -189,13 +189,6 @@ const getUserById = (id: string) => {
   return { request, abort: () => abortController.abort() };
 };
 
-const getAllUsers = () => {
-  const abortController = new AbortController();
-  const request = apiClient.get<IUser[]>("/auth", {
-    signal: abortController.signal,
-  });
-  return { request, abort: () => abortController.abort() };
-};
 const updateUser = (id: string, userData: Partial<IUser>) => {
   const abortController = new AbortController();
   const request = apiClient.put<IUser>(`/auth/${id}`, userData, {
@@ -220,7 +213,6 @@ export default {
   logout,
   refresh,
   getUserById,
-  getAllUsers,
   clearTokens,
   updateUser,
   deleteUser,

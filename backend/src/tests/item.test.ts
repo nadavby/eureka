@@ -95,7 +95,7 @@ describe("Item API Tests", () => {
     // unread file stream could make the client see ECONNRESET instead of the 401.
     const res = await postItem(app, undefined, itemFields({ category }), false);
     expect(res.statusCode).toBe(401);
-    expect(res.text).toBe("Unauthorized - Missing authorization header");
+    expect(res.body.error).toBe("UNAUTHORIZED");
   });
 
   test("Create item without image fails", async () => {

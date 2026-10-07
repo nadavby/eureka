@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { authMiddleware } from "../controllers/auth_controller";
+import { requireAuth } from "../middleware/auth";
 import notificationController from "../controllers/notification_controller";
 
 const router = Router();
 
-router.get("/", authMiddleware, notificationController.getAllByUserId);
+router.get("/", requireAuth, notificationController.getAllByUserId);
 
-router.get("/:id", authMiddleware, notificationController.getById);
+router.get("/:id", requireAuth, notificationController.getById);
 
-router.delete("/:id", authMiddleware, notificationController.deleteById);
+router.delete("/:id", requireAuth, notificationController.deleteById);
 
-router.put("/:id/read", authMiddleware, notificationController.markAsRead);
+router.put("/:id/read", requireAuth, notificationController.markAsRead);
 
-router.put("/read-all", authMiddleware, notificationController.markAllAsRead);
+router.put("/read-all", requireAuth, notificationController.markAllAsRead);
 
 export = router;

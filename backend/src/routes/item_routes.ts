@@ -7,7 +7,7 @@ import {
   getItemById,
   deleteItem,
 } from "../controllers/item_controller";
-import { authMiddleware } from "../controllers/auth_controller";
+import { requireAuth } from "../middleware/auth";
 import multer from "multer";
 
 const router = express.Router();
@@ -161,7 +161,7 @@ const upload = multer({
  */
 router.post(
   "/",
-  authMiddleware,
+  requireAuth,
   upload.fields([
     { name: "file", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -181,7 +181,7 @@ router.post(
 
       const imageUrl = base + file.path.replace(/\\/g, '/');
       req.body.imageUrl = imageUrl;
-      req.body.userId = req.body.userId || req.params.userId;
+      req.body.userId = req.user!.id;
 
       if (req.body.name) {
         req.body.description = req.body.description || req.body.name;
@@ -317,6 +317,6 @@ router.get("/:id", getItemById);
  *       500:
  *         description: Server error
  */
-router.delete("/:id", authMiddleware, deleteItem);
+router.delete("/:id", requireAuth, deleteItem);
 
 export = router;

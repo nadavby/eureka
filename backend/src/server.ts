@@ -1,50 +1,36 @@
-/** @format */
-
 import express, { Express } from "express";
 import path from "path";
-const app = express();
-import dotenv from "dotenv";
-dotenv.config();
-import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import authRoutes from "./routes/auth_routes";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
+import cors from "cors";
+import { config } from "./lib/config";
+import { httpLogger, logger } from "./lib/logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { getAllowedOrigins } from "./config/cors";
+import authRoutes from "./routes/auth_routes";
 import fileRoutes from "./routes/file_routes";
 import itemRoutes from "./routes/item_routes";
-import cors from "cors";
 import matchRoutes from "./routes/match_routes";
 import notificationRoutes from "./routes/notification_routes";
-import { getAllowedOrigins } from "./config/cors";
 
-const corsOptions = {
-  origin: getAllowedOrigins(),
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept", "Referer"],
-  credentials: true,
-  maxAge: 86400,
-};
+const app = express();
 
-app.use(cors(corsOptions));
+app.disable("x-powered-by");
+app.use(httpLogger);
+app.use(
+  cors({
+    origin: getAllowedOrigins(),
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Referer"],
+    credentials: true,
+    maxAge: 86400,
+  })
+);
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
-app.options("*", (req, res) => {
-  res.header(
-    "Access-Control-Allow-Origin",
-    req.headers.origin || corsOptions.origin[0]
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", corsOptions.methods.join(", "));
-  res.header(
-    "Access-Control-Allow-Headers",
-    corsOptions.allowedHeaders.join(", ")
-  );
-  res.header("Access-Control-Max-Age", String(corsOptions.maxAge));
-  res.status(200).end();
-});
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.get("/health", (req, res) => {
+app.get("/health", (_req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
   res.status(dbConnected ? 200 : 503).json({ status: dbConnected ? "ok" : "degraded", db: dbConnected });
 });
@@ -56,40 +42,29 @@ app.use("/match", matchRoutes);
 app.use("/notification", notificationRoutes);
 app.use("/public", express.static("public"));
 
-const options = {
+const specs = swaggerJsDoc({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: " Lost & Found API",
+      title: "Eureka Lost & Found API",
       version: "1.0.0",
-      description:
-        "REST server for lost and found items with image recognition",
+      description: "REST API for reporting lost and found items and matching them with AI",
     },
-    servers: [
-      { url: process.env.DOMAIN_BASE || "http://localhost:3000" },
-    ],
+    servers: [{ url: config.DOMAIN_BASE }],
   },
   // Resolved relative to this file so docs work from src (ts-node) and dist (compiled JS)
   apis: [path.join(__dirname, "routes", "*.{ts,js}")],
-};
-const specs = swaggerJsDoc(options);
+});
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 
-const initApp = () => {
-  return new Promise<Express>((resolve, reject) => {
-    const db = mongoose.connection;
-    db.on("error", (error) => console.error(error));
-    db.once("open", () => console.log("Connected to Database"));
-    if (process.env.DB_CONNECTION === undefined) {
-      console.log("Please add a valid DB_CONNECTION to your .env file");
-      reject();
-    } else {
-      mongoose.connect(process.env.DB_CONNECTION).then(() => {
-        console.log("initApp Finished");
-        resolve(app);
-      });
-    }
-  });
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+const initApp = async (): Promise<Express> => {
+  mongoose.connection.on("error", (err) => logger.error({ err }, "MongoDB connection error"));
+  await mongoose.connect(config.DB_CONNECTION);
+  logger.info("Connected to MongoDB");
+  return app;
 };
 
 export default initApp;

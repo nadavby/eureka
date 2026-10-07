@@ -44,13 +44,13 @@ type TestUser = {
 const owner: TestUser = {
   email: "owner@match.test",
   userName: "matchOwner",
-  password: "123456",
+  password: "password123",
   phoneNumber: "+972500000001",
 };
 const finder: TestUser = {
   email: "finder@match.test",
   userName: "matchFinder",
-  password: "123456",
+  password: "password123",
   phoneNumber: "+972500000002",
 };
 
