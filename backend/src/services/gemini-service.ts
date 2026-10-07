@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai";
+import { logger } from "../lib/logger";
 import { IItem } from "../models/item_model";
 
 type IItemWithTimestamps = IItem & {
@@ -100,7 +101,7 @@ class GeminiService {
         logos: Array.isArray(visionApiData?.logos) ? visionApiData.logos.map((logo: VisionLogoData) => logo?.description || '').filter(Boolean) : [],
       };
     } catch (error) {
-      console.error('Error extracting vision summary:', error);
+      logger.warn({ err: error }, 'Failed to extract vision summary');
       return {
         labels: [],
         objects: [],
@@ -198,26 +199,25 @@ Analyze the items and return ONLY a JSON response in the format:
         const parsedResponse = JSON.parse(cleanedResponse);
         
         if (typeof parsedResponse.confidenceScore !== 'number' || typeof parsedResponse.reasoning !== 'string') {
-          console.error("Invalid response structure from Gemini:", parsedResponse);
+          logger.warn("Gemini returned an unexpected response structure");
           return { confidenceScore: 0, reasoning: "" };
         }
         
         const confidenceScore = Math.min(100, Math.max(0, parsedResponse.confidenceScore));
         return { confidenceScore, reasoning: parsedResponse.reasoning };
       } catch (error) {
-        console.error("Error parsing Gemini response:", error);
-        console.error("Raw response:", responseText);
+        logger.warn({ err: error, responseLength: responseText.length }, "Failed to parse Gemini response");
         return { confidenceScore: 0, reasoning: "" };
       }
     } catch (error) {
       if ((error as { status?: number }).status === 429) {
-        console.error("Rate limit exceeded. Please try again in a few seconds.");
+        logger.warn("Gemini rate limit exceeded");
         return { 
           confidenceScore: 0, 
           reasoning: "Rate limit exceeded. Please try again in a few seconds." 
         };
       }
-      console.error("Error in evaluateMatch:", error);
+      logger.error({ err: error }, "Gemini evaluateMatch failed");
       return { confidenceScore: 0, reasoning: "" };
     }
   }

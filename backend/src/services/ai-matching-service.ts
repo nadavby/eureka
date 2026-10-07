@@ -1,58 +1,31 @@
-import { IItem } from '../models/item_model';
-import geminiService from './gemini-service';
-import { shouldSkipComparison } from './matching-service';
+import { IItem } from "../models/item_model";
+import geminiService from "./gemini-service";
+import { shouldSkipComparison } from "./matching-service";
+import { logger } from "../lib/logger";
 
+const MIN_SCORE = 70;
 
-export const AIMatchingService = 
-  async(
-    targetItem: IItem,
-    potentialMatches: IItem[]
-  ): Promise<{ item: IItem; confidenceScore: number }[]> => {
-    const matches: { item: IItem; confidenceScore: number }[] = [];
-    
+/** Asks Gemini to score each plausible lost/found pair and returns the strong matches, best first. */
+export const AIMatchingService = async (
+  targetItem: IItem,
+  potentialMatches: IItem[]
+): Promise<{ item: IItem; confidenceScore: number }[]> => {
+  const matches: { item: IItem; confidenceScore: number }[] = [];
+  logger.debug({ itemType: targetItem.itemType, candidates: potentialMatches.length }, "Starting match analysis");
 
+  for (const potentialMatch of potentialMatches) {
+    try {
+      const lostItem = targetItem.itemType === "lost" ? targetItem : potentialMatch;
+      const foundItem = targetItem.itemType === "found" ? targetItem : potentialMatch;
+      if (shouldSkipComparison(lostItem, foundItem)) continue;
 
-    console.log(`\n=== Starting Match Analysis ===`);
-    console.log(`Looking for matches between ${targetItem.itemType} item and ${potentialMatches.length} potential matches\n`);
-
-    for (const potentialMatch of potentialMatches) {
-      try {
-        const lostItem = targetItem.itemType === 'lost' ? targetItem : potentialMatch;
-        const foundItem = targetItem.itemType === 'found' ? targetItem : potentialMatch;
-        
-        if (shouldSkipComparison(lostItem, foundItem)) {
-          continue;
-        }
-
-        const matchEvaluation = await geminiService.evaluateMatch(
-          lostItem,
-          foundItem,
-        );
-
-        console.log('\n=== Match Evaluation Results ===');
-        console.log('\n🖼️ Vision Analysis:');
-      
-        console.log('\n📊 Final Score:', matchEvaluation.confidenceScore + '%');
-        console.log('Reasoning:', matchEvaluation.reasoning);
-        console.log('\n-------------------------------------------\n');
-        
-        if (matchEvaluation.confidenceScore >= 70) {
-          matches.push({
-            item: potentialMatch,
-            confidenceScore: matchEvaluation.confidenceScore
-          });
-        }
-      } catch (error) {
-        console.error('Error processing potential match:', error);
-        continue;
-      }
+      const { confidenceScore } = await geminiService.evaluateMatch(lostItem, foundItem);
+      logger.debug({ lostItemId: lostItem._id, foundItemId: foundItem._id, confidenceScore }, "Pair evaluated");
+      if (confidenceScore >= MIN_SCORE) matches.push({ item: potentialMatch, confidenceScore });
+    } catch (err) {
+      logger.warn({ err, candidateId: potentialMatch._id }, "Failed to evaluate candidate");
     }
-
-    const sortedMatches = matches.sort((a, b) => b.confidenceScore - a.confidenceScore);
-    
-    if (sortedMatches.length > 0) {
-      console.log(`Found ${sortedMatches.length} high-confidence matches`);
-    }
-
-    return sortedMatches;
   }
+
+  return matches.sort((a, b) => b.confidenceScore - a.confidenceScore);
+};

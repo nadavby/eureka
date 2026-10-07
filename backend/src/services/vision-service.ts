@@ -1,5 +1,6 @@
 import axios from 'axios';
 import fs from 'fs';
+import { logger } from '../lib/logger';
 import path from 'path';
 
 interface VisionText {
@@ -54,7 +55,7 @@ class VisionService {
   constructor() {
     this.apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY || '';
     if (!this.apiKey) {
-      console.error('GOOGLE_CLOUD_VISION_API_KEY is not set in environment variables');
+      logger.warn('GOOGLE_CLOUD_VISION_API_KEY is not set');
     }
   }
  
@@ -79,7 +80,7 @@ class VisionService {
         logos: analysisResult.logos
       };
     } catch (error) {
-      console.error('Error getting image analysis:', error);
+      logger.error({ err: error }, 'Vision image analysis failed');
       return { labels: [], objects: [], texts: [], logos: [] };
     }
   }
@@ -97,14 +98,14 @@ class VisionService {
 
       return { x, y, width, height };
     } catch (error) {
-      console.error('Error calculating bounding box:', error);
+      logger.warn({ err: error }, 'Failed to calculate bounding box');
       return undefined;
     }
   }
 
   private async analyzeImage(imageUrl: string): Promise<ImageAnalysisResult | null> {
     if (!this.apiKey) {
-      console.error('Cannot analyze image: API key is not configured');
+      logger.warn('Cannot analyze image: Vision API key is not configured');
       return null;
     }
 
@@ -223,7 +224,7 @@ class VisionService {
 
       return analysisResult;
     } catch (error) {
-      console.error('Error analyzing image:', error);
+      logger.error({ err: error }, 'Vision analyzeImage failed');
       return null;
     }
   }
