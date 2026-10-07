@@ -22,7 +22,7 @@ export const ItemTag = ({ item, footer }: { item: Item; footer?: ReactNode }) =>
         title={title(item)}
         meta={
           <span className="flex flex-col gap-0.5">
-            {item.placeName && <span className="line-clamp-1">{item.placeName}</span>}
+            {item.placeName && <span className="line-clamp-1" dir="auto">{item.placeName}</span>}
             <span className="font-mono">{formatDate(item.date, i18n.resolvedLanguage ?? "en")}</span>
           </span>
         }

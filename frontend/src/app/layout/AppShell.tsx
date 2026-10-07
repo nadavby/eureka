@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Wordmark } from "@/components/brand/Wordmark";
 import { useSession } from "@/features/auth/session";
 import { useLiveItemStatus } from "@/features/items/hooks";
+import { NotificationsBell } from "@/features/notifications/NotificationsBell";
 import { cn } from "@/lib/utils";
 import { LanguageMenu, ThemeMenu } from "./Preferences";
 
@@ -155,6 +156,7 @@ export const AppShell = () => {
                 <span className="sm:hidden">
                   <ReportMenu compact />
                 </span>
+                <NotificationsBell />
                 <UserMenu />
               </>
             ) : (

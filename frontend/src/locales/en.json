@@ -284,5 +284,29 @@
     "noConversations": "Conversations start when Eureka finds a match for one of your items.",
     "pickTitle": "Choose a conversation",
     "pickBody": "Each conversation belongs to one match."
+  },
+  "notifications": {
+    "newMatch": "Possible match found",
+    "newMatchBody": "Eureka found a report that may be the same item.",
+    "view": "View",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet",
+    "labelUnread_one": "Notifications, {{count}} unread",
+    "labelUnread_other": "Notifications, {{count}} unread"
+  },
+  "map": {
+    "title": "Map",
+    "lead": "Where open reports were lost or found."
+  },
+  "profile": {
+    "title": "Profile",
+    "lead": "Your name and phone are shown only to people you've confirmed a match with.",
+    "changePhoto": "Change photo",
+    "saved": "Saved",
+    "saveFailed": "Your changes couldn't be saved. Try again.",
+    "qrTitle": "Your Eureka code",
+    "qrBody": "Stick it on things you carry. Whoever finds them can scan it to reach your profile.",
+    "publicLead": "Open reports",
+    "noOpenReports": "No open reports"
   }
 }

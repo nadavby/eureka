@@ -35,12 +35,15 @@ Design choices:
 
 ## Features
 
-- Lost / found item reporting with photo upload, map location picker and item metadata (category, brand, colors, materials)
+- Report a lost or found item in three steps: photo (resized in the browser), details, and a map pin with the place name filled in automatically
+- Live matching status on every report (analyzing, searching, N matches) pushed over WebSockets
+- Match page: both photos as claim tags tied together, the score, and the reasons and differences the AI found; contact details are shared only after both owners confirm
+- English and Hebrew with full right-to-left layout, light and dark themes, keyboard and screen-reader friendly
 - Background AI matching pipeline: structured extraction, multimodal vector search, rule filter and photo-to-photo reranking with explanations
 - Real-time notifications and 1:1 chat (Socket.IO namespaces)
 - Match confirmation flow and resolved-item tracking
 - JWT auth with refresh tokens and Google Sign-In
-- Interactive map of lost items (Google Maps)
+- Map of open reports (Leaflet + OpenStreetMap, no API key needed)
 - REST API documented with Swagger (`/api-docs`), Jest integration tests
 
 ## Security
@@ -57,10 +60,10 @@ Design choices:
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 18, TypeScript, Vite, React Router, React Hook Form + Zod, Tailwind / Bootstrap, Google Maps |
+| Frontend | React 19, TypeScript (strict), Vite, Tailwind CSS v4, shadcn/ui (Radix), TanStack Query, React Router, React Hook Form + Zod, react-i18next (EN/HE, RTL), Leaflet, Socket.IO client |
 | Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Zod, pino, helmet, Multer, sharp, Cloudinary, Swagger |
 | AI | Gemini (@google/genai): Flash-Lite extraction, Flash reranking, gemini-embedding-2; MongoDB Atlas Vector Search |
-| Testing | Jest + Supertest, mongodb-memory-server, socket.io-client |
+| Testing | Backend: Jest + Supertest, mongodb-memory-server, socket.io-client · Frontend: Vitest + Testing Library |
 | DevOps | Docker (multi-stage images), Docker Compose, GitHub Actions CI, GitHub Container Registry |
 
 ## Project structure
@@ -71,6 +74,15 @@ frontend/  React SPA
 ```
 
 ## Running locally
+
+### Quick start: no database, no API keys
+
+```bash
+cd backend && npm install && AI_FAKE=true npm run dev:memory   # API on :3000 with an in-memory MongoDB and an offline AI
+cd frontend && npm install && npm run dev                      # http://localhost:5173
+```
+
+`AI_FAKE=true` swaps Gemini for a deterministic offline matcher (word overlap and hashed embeddings), so you can try the full flow (report, match, chat) without any keys. It is refused in production.
 
 ### With Docker (recommended)
 

@@ -12,6 +12,9 @@ import { ReportPage } from "@/features/report/ReportPage";
 import { ItemDetailPage } from "@/features/items/ItemDetailPage";
 import { MatchPage } from "@/features/matches/MatchPage";
 import { ChatsPage } from "@/features/chat/ChatsPage";
+import { MapPage } from "@/features/map/MapPage";
+import { ProfilePage } from "@/features/profile/ProfilePage";
+import { PublicProfilePage } from "@/features/profile/PublicProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +24,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <LandingPage /> },
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
+      { path: "/u/:id", element: <PublicProfilePage /> },
       {
         element: <RequireAuth />,
         children: [
@@ -31,6 +35,8 @@ export const router = createBrowserRouter([
           { path: "/matches/:id", element: <MatchPage /> },
           { path: "/chats", element: <ChatsPage /> },
           { path: "/chats/:matchId", element: <ChatsPage /> },
+          { path: "/map", element: <MapPage /> },
+          { path: "/profile", element: <ProfilePage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

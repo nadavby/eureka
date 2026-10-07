@@ -144,7 +144,7 @@ export const ItemDetailPage = () => {
             {isMine && <StatusChip item={data} />}
           </div>
           {(a?.description || data.description) && (
-            <p className="mt-3 text-muted-foreground">{data.description || a?.description}</p>
+            <p className="mt-3 text-muted-foreground" dir="auto">{data.description || a?.description}</p>
           )}
 
           <dl className="mt-5 divide-y border-y">
@@ -154,7 +154,7 @@ export const ItemDetailPage = () => {
             <Fact label={t(`item.date.${data.itemType}`)}>
               <span className="font-mono">{formatDate(data.date, lng)}</span>
             </Fact>
-            {data.placeName && <Fact label={t("item.place")}>{data.placeName}</Fact>}
+            {data.placeName && <Fact label={t("item.place")}><span dir="auto">{data.placeName}</span></Fact>}
             {data.colors.length > 0 && (
               <Fact label={t("report.colors")}>
                 <span className="flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ export const ItemDetailPage = () => {
               <Fact label={t("item.features")}>
                 <ul className="list-inside list-disc space-y-0.5">
                   {a.distinctiveFeatures.map((f) => (
-                    <li key={f}>{f}</li>
+                    <li key={f} dir="auto">{f}</li>
                   ))}
                 </ul>
               </Fact>

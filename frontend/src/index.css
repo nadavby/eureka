@@ -190,3 +190,9 @@
 .dark .leaflet-tile-pane {
   filter: brightness(0.75) contrast(1.1) saturate(0.8);
 }
+
+/* Wide letter-spacing suits Latin caps but breaks Hebrew letterforms apart. */
+:lang(he) .tracking-widest,
+:lang(he) .tracking-wider {
+  letter-spacing: 0;
+}

@@ -112,7 +112,7 @@ const Thread = ({ matchId }: { matchId: string }) => {
                   m.pending && "opacity-70"
                 )}
               >
-                <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                <p className="whitespace-pre-wrap break-words" dir="auto">{m.content}</p>
                 <p className={cn("mt-0.5 flex items-center justify-end gap-1 text-[10px]", mine ? "text-primary-foreground/75" : "text-muted-foreground")}>
                   {formatRelative(m.timestamp, lng)}
                   {mine &&

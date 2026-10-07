@@ -39,7 +39,7 @@ const TagFor = ({ item }: { item: Item }) => {
       title={title(item)}
       meta={
         <span className="flex flex-col gap-0.5">
-          {item.placeName && <span className="line-clamp-1">{item.placeName}</span>}
+          {item.placeName && <span className="line-clamp-1" dir="auto">{item.placeName}</span>}
           <span className="font-mono">{formatDate(item.date, i18n.resolvedLanguage ?? "en")}</span>
         </span>
       }
@@ -119,7 +119,7 @@ export const MatchPage = () => {
               <ul className="mt-3 space-y-2 text-sm">
                 {m.reasons.map((r) => (
                   <li key={r} className="flex gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-found" aria-hidden /> {r}
+                    <Check className="mt-0.5 size-4 shrink-0 text-found" aria-hidden /> <span dir="auto">{r}</span>
                   </li>
                 ))}
               </ul>
@@ -132,7 +132,7 @@ export const MatchPage = () => {
                 <ul className="mt-2 space-y-2 text-sm text-muted-foreground">
                   {m.conflicts.map((c) => (
                     <li key={c} className="flex gap-2">
-                      <X className="mt-0.5 size-4 shrink-0 text-lost" aria-hidden /> {c}
+                      <X className="mt-0.5 size-4 shrink-0 text-lost" aria-hidden /> <span dir="auto">{c}</span>
                     </li>
                   ))}
                 </ul>
