@@ -23,7 +23,7 @@ jobs:
           - 27017:27017
     env:
       DB_CONNECTION: mongodb://localhost:27017/eureka-test
-      TOKEN_SECRET: ci-test-secret
+      TOKEN_SECRET: ci-test-secret-ci-test-secret-ci-test-secret
       TOKEN_EXPIRATION: 1h
       REFRESH_TOKEN_EXPIRATION: 7d
       DOMAIN_BASE: http://localhost:3000
