@@ -2,17 +2,16 @@
 import { Server, Namespace } from "socket.io";
 import { Server as HttpServer } from "http";
 import { initChatSocket } from "./chat.socket.service";
-import { getAllowedOrigins } from "../config/cors";
+import { allowedOrigins } from "../middleware/security";
 
 let io: Server;
 let chatNamespace: Namespace;
 
 export const initSocket = (server: HttpServer) => {
-  const origins = getAllowedOrigins();
 
   io = new Server(server, {
     cors: {
-      origin: origins,
+      origin: allowedOrigins,
       methods: ["GET", "POST", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization", "Accept", "Referer"],
       credentials: true,

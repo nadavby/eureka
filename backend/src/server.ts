@@ -3,11 +3,10 @@ import path from "path";
 import mongoose from "mongoose";
 import swaggerJsDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
-import cors from "cors";
 import { config } from "./lib/config";
 import { httpLogger, logger } from "./lib/logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
-import { getAllowedOrigins } from "./config/cors";
+import { corsMiddleware, helmetMiddleware } from "./middleware/security";
 import authRoutes from "./routes/auth_routes";
 import fileRoutes from "./routes/file_routes";
 import itemRoutes from "./routes/item_routes";
@@ -17,16 +16,11 @@ import notificationRoutes from "./routes/notification_routes";
 const app = express();
 
 app.disable("x-powered-by");
+// Render and Vercel sit behind one proxy hop; needed for correct client IPs in rate limiting.
+if (config.NODE_ENV === "production") app.set("trust proxy", 1);
 app.use(httpLogger);
-app.use(
-  cors({
-    origin: getAllowedOrigins(),
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "Referer"],
-    credentials: true,
-    maxAge: 86400,
-  })
-);
+app.use(helmetMiddleware);
+app.use(corsMiddleware);
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 
