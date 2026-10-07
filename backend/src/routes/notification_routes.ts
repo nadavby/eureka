@@ -1,17 +1,143 @@
 import { Router } from "express";
-import { requireAuth } from "../middleware/auth";
 import notificationController from "../controllers/notification_controller";
+import { asyncHandler } from "../lib/async-handler";
+import { requireAuth } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { idParams } from "../schemas/common";
 
 const router = Router();
 
-router.get("/", requireAuth, notificationController.getAllByUserId);
+/**
+ * @swagger
+ * tags:
+ *   name: Notifications
+ *   description: Notifications of the authenticated user (always scoped to the caller)
+ */
 
-router.get("/:id", requireAuth, notificationController.getById);
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Notification:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         userId:
+ *           type: string
+ *         matchId:
+ *           type: string
+ *         type:
+ *           type: string
+ *           example: MATCH_FOUND
+ *         title:
+ *           type: string
+ *         message:
+ *           type: string
+ *         isRead:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ */
 
-router.delete("/:id", requireAuth, notificationController.deleteById);
+/**
+ * @swagger
+ * /notification:
+ *   get:
+ *     summary: List my notifications (newest first)
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: "{ data: Notification[] }"
+ *       401:
+ *         description: Not authenticated
+ */
+router.get("/", requireAuth, asyncHandler(notificationController.getAllByUserId));
 
-router.put("/:id/read", requireAuth, notificationController.markAsRead);
+/**
+ * @swagger
+ * /notification/read-all:
+ *   put:
+ *     summary: Mark all my notifications as read
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: "{ message, modifiedCount }"
+ *       401:
+ *         description: Not authenticated
+ */
+router.put("/read-all", requireAuth, asyncHandler(notificationController.markAllAsRead));
 
-router.put("/read-all", requireAuth, notificationController.markAllAsRead);
+/**
+ * @swagger
+ * /notification/{id}:
+ *   get:
+ *     summary: Get one of my notifications
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: "{ data: Notification }"
+ *       401:
+ *         description: Not authenticated
+ *       404:
+ *         description: Not found (or not mine)
+ *   delete:
+ *     summary: Delete one of my notifications
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Deleted
+ *       401:
+ *         description: Not authenticated
+ *       404:
+ *         description: Not found (or not mine)
+ */
+router.get("/:id", requireAuth, validate({ params: idParams }), asyncHandler(notificationController.getById));
+router.delete("/:id", requireAuth, validate({ params: idParams }), asyncHandler(notificationController.deleteById));
 
-export = router;
+/**
+ * @swagger
+ * /notification/{id}/read:
+ *   put:
+ *     summary: Mark one of my notifications as read
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: "{ data: Notification }"
+ *       401:
+ *         description: Not authenticated
+ *       404:
+ *         description: Not found (or not mine)
+ */
+router.put("/:id/read", requireAuth, validate({ params: idParams }), asyncHandler(notificationController.markAsRead));
+
+export default router;
