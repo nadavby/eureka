@@ -23,3 +23,16 @@ describe("parseConfig", () => {
     expect(() => parseConfig({ ...base, TOKEN_SECRET: "short" })).toThrow(/TOKEN_SECRET/);
   });
 });
+
+describe("image storage selection", () => {
+  const base = { DB_CONNECTION: "mongodb://localhost/x", TOKEN_SECRET: "a".repeat(32) };
+
+  it("uses Cloudinary when CLOUDINARY_URL is set, local disk otherwise", () => {
+    expect(parseConfig(base).IMAGE_STORAGE).toBe("local");
+    expect(parseConfig({ ...base, CLOUDINARY_URL: "cloudinary://k:s@demo" }).IMAGE_STORAGE).toBe("cloudinary");
+  });
+
+  it("fails fast when Cloudinary is forced without credentials", () => {
+    expect(() => parseConfig({ ...base, IMAGE_STORAGE: "cloudinary" })).toThrow(/CLOUDINARY_URL/);
+  });
+});

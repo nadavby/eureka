@@ -22,14 +22,17 @@ const schema = z.object({
   MATCH_RADIUS_KM: z.coerce.number().positive().default(10),
   MATCH_THRESHOLD: z.coerce.number().min(0).max(100).default(70),
   GOOGLE_CLIENT_ID: z.string().default(""),
+  CLOUDINARY_URL: z.string().startsWith("cloudinary://").optional(),
+  IMAGE_STORAGE: z.enum(["local", "cloudinary"]).optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
   SSL_KEY_PATH: z.string().optional(),
   SSL_CERT_PATH: z.string().optional(),
 });
 
-export type Config = Omit<z.infer<typeof schema>, "VECTOR_SEARCH"> & {
+export type Config = Omit<z.infer<typeof schema>, "VECTOR_SEARCH" | "IMAGE_STORAGE"> & {
   CLIENT_URLS: string[];
   VECTOR_SEARCH: "memory" | "atlas";
+  IMAGE_STORAGE: "local" | "cloudinary";
 };
 
 export const parseConfig = (env: Record<string, string | undefined>): Config => {
@@ -41,7 +44,11 @@ export const parseConfig = (env: Record<string, string | undefined>): Config => 
   const CLIENT_URLS = result.data.CLIENT_URL.split(",").map((s) => s.trim()).filter(Boolean);
   // Atlas Vector Search only exists on Atlas; everything else (tests, local Mongo) uses the in-memory search.
   const VECTOR_SEARCH = result.data.VECTOR_SEARCH ?? (result.data.NODE_ENV === "production" ? "atlas" : "memory");
-  return { ...result.data, CLIENT_URLS, VECTOR_SEARCH };
+  const IMAGE_STORAGE = result.data.IMAGE_STORAGE ?? (result.data.CLOUDINARY_URL ? "cloudinary" : "local");
+  if (IMAGE_STORAGE === "cloudinary" && !result.data.CLOUDINARY_URL) {
+    throw new Error("Invalid environment configuration: CLOUDINARY_URL is required when IMAGE_STORAGE=cloudinary");
+  }
+  return { ...result.data, CLIENT_URLS, VECTOR_SEARCH, IMAGE_STORAGE };
 };
 
 export const config = parseConfig(process.env);
