@@ -70,12 +70,12 @@ describe("item security", () => {
     expect(res.body.message).toBe("Only image uploads are allowed");
   });
 
-  it("rejects images over 5 MB", async () => {
+  it("rejects uploads over 8 MB", async () => {
     const res = await request(app)
       .post("/items")
       .set("Authorization", `Bearer ${owner.token}`)
       .field("itemType", "lost")
-      .attach("image", tmpFile("big.png", Buffer.alloc(6 * 1024 * 1024)), { contentType: "image/png" });
+      .attach("image", tmpFile("big.png", Buffer.alloc(9 * 1024 * 1024)), { contentType: "image/png" });
     expect(res.status).toBe(413);
   });
 

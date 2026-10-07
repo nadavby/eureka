@@ -127,7 +127,8 @@ describe("Item API Tests", () => {
     expect(res.body.ownerEmail).toBeUndefined();
     expect(res.body.isResolved).toBe(false);
     expect(res.body.location).toEqual({ lat: 32.0853, lng: 34.7818 });
-    expect(res.body.imageUrl).toMatch(/\/public\/items\/\d+-[0-9a-f-]+\.png$/);
+    expect(res.body.imageUrl).toMatch(/\/public\/items\/[0-9a-f-]{36}\.webp$/);
+    expect(res.body.imagePublicId).toBeUndefined();
     // matching happens in the background
     expect(res.body.matchingStatus).toBe("analyzing");
     await queue.drain();

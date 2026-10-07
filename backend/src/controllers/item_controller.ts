@@ -4,10 +4,10 @@ import userModel from "../models/user_model";
 import matchModel from "../models/match_model";
 import notificationModel from "../models/notification_model";
 import chatModel from "../models/chat_model";
-import { config } from "../lib/config";
 import { badRequest, forbidden, notFound, unauthorized } from "../lib/errors";
 import { queue } from "../jobs";
 import { ANALYZE_ITEM } from "../matching";
+import { removeStoredImage, storeUpload } from "../images";
 
 /**
  * Saves the item and returns immediately. Matching runs in the background
@@ -21,13 +21,21 @@ const uploadItem = async (req: Request, res: Response) => {
   const userId = req.user!.id;
   if (!(await userModel.exists({ _id: userId }))) throw unauthorized("User no longer exists");
 
-  const item = await itemModel.create({
-    ...req.body,
-    userId,
-    imageUrl: `${config.DOMAIN_BASE}/public/items/${file.filename}`,
-    matchingStatus: "analyzing",
-    isResolved: false,
-  });
+  const image = await storeUpload(file, "items");
+  let item;
+  try {
+    item = await itemModel.create({
+      ...req.body,
+      userId,
+      imageUrl: image.url,
+      imagePublicId: image.publicId,
+      matchingStatus: "analyzing",
+      isResolved: false,
+    });
+  } catch (err) {
+    await removeStoredImage(image.publicId); // don't leave an orphaned file behind
+    throw err;
+  }
   await queue.enqueue(ANALYZE_ITEM, { itemId: item._id.toString() });
 
   res.status(201).json(item);
@@ -57,6 +65,7 @@ const deleteItem = async (req: Request, res: Response) => {
   await chatModel.deleteMany({ matchId: { $in: matchIds } });
   await matchModel.deleteMany({ _id: { $in: matchIds } });
   await item.deleteOne();
+  await removeStoredImage(item.imagePublicId);
   res.json({ message: "Item deleted successfully" });
 };
 

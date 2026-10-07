@@ -5,6 +5,8 @@ export interface IItem {
   _id?: string;
   userId: string;
   imageUrl: string;
+  /** Storage handle of the image, used to delete it with the item. */
+  imagePublicId?: string;
   itemType: "lost" | "found";
   description?: string;
   location?: { lat: number; lng: number } | string;
@@ -45,6 +47,7 @@ const itemSchema = new mongoose.Schema<IItem>(
   {
     userId: { type: String, required: true, index: true },
     imageUrl: { type: String, required: true },
+    imagePublicId: String,
     itemType: { type: String, enum: ["lost", "found"], required: true },
     description: String,
     date: { type: Date, required: true },
@@ -72,6 +75,7 @@ itemSchema.set("toJSON", {
   transform: (_doc, ret: Record<string, unknown>) => {
     delete ret.__v;
     delete ret.embedding;
+    delete ret.imagePublicId;
     return ret;
   },
 });

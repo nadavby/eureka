@@ -146,7 +146,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-const upload = imageUpload("items").fields([
+const upload = imageUpload().fields([
   { name: "file", maxCount: 1 },
   { name: "image", maxCount: 1 },
 ]);
