@@ -1,21 +1,25 @@
-<!-- @format -->
-
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" dir="ltr">
   <head>
     <meta charset="UTF-8" />
-    <link
-      rel="icon"
-      href="/favicon.jpg" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0" />
-    <title>EUREKA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Eureka reunites people with lost items: report what you lost or found with a photo, and AI matching tells you both when there's a match." />
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1323" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // Apply theme and text direction before first paint (mirrors src/lib/theme.tsx and src/lib/i18n.ts).
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+        var l = localStorage.getItem("lang") || navigator.language || "en";
+        if (l.indexOf("he") === 0) { document.documentElement.lang = "he"; document.documentElement.dir = "rtl"; }
+      } catch (e) {}
+    </script>
+    <title>Eureka · Lost & Found</title>
   </head>
   <body>
     <div id="root"></div>
-    <script
-      type="module"
-      src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

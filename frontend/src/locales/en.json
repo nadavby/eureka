@@ -1,0 +1,92 @@
+{
+  "app": {
+    "name": "Eureka",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "browse": "Browse",
+    "myItems": "My items",
+    "map": "Map",
+    "chats": "Chats",
+    "report": "Report an item",
+    "reportLost": "I lost something",
+    "reportFound": "I found something",
+    "profile": "Profile",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signOut": "Sign out",
+    "menu": "Menu",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "landing": {
+    "headline": "Lost something? It may already be waiting for you.",
+    "lead": "Report what you lost or found with one photo. Eureka compares it with every report nearby and tells you both when there's a match.",
+    "haveAccount": "Already reported something?",
+    "howTitle": "How it works",
+    "step1Title": "Take a photo",
+    "step1Body": "Add a photo, the place and the day. Eureka reads the details from the photo for you.",
+    "step2Title": "Eureka compares",
+    "step2Body": "It looks for reports of the same object nearby and compares the photos side by side.",
+    "step3Title": "Confirm and meet",
+    "step3Body": "When you both agree it's the same item, chat and arrange the handover.",
+    "exampleTitle": "What a match looks like",
+    "exampleCaption": "Two reports, tied together with the reasons Eureka found.",
+    "exampleReason1": "Same torn corner at the bottom left",
+    "exampleReason2": "Initials N.B. embossed on the front",
+    "exampleLostWhere": "Tel Aviv, Rothschild Blvd",
+    "exampleFoundWhere": "Tel Aviv, Habima Square",
+    "exampleCategory": "Brown leather wallet"
+  },
+  "tag": {
+    "lost": "Lost",
+    "found": "Found",
+    "number": "Tag {{number}}",
+    "score": "{{score}}% match"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginLead": "Sign in to see your reports and matches.",
+    "registerTitle": "Create your account",
+    "registerLead": "You'll need it to report items and chat with the person who has yours.",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "userName": "Name",
+    "phone": "Phone",
+    "phoneHint": "Shown only to people you have a match with",
+    "avatar": "Profile picture (optional)",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "or": "or",
+    "noAccount": "New to Eureka?",
+    "haveAccount": "Already have an account?",
+    "invalidCredentials": "That email and password don't match an account.",
+    "networkError": "Can't reach the server. Check your connection and try again.",
+    "googleFailed": "Google sign-in didn't work. Try again or use your email.",
+    "registered": "Account created. Sign in to continue.",
+    "errors": {
+      "email": "Enter a valid email address",
+      "password": "Use at least 8 characters",
+      "userName": "Enter a name of 2–40 characters",
+      "phone": "Enter a phone number"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "close": "Close",
+    "somethingWrong": "Something went wrong",
+    "notFoundTitle": "This page doesn't exist",
+    "notFoundBody": "The link may be old, or the item was removed.",
+    "goHome": "Go to the home page"
+  }
+}

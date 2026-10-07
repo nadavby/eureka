@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand --forceExit --coverage",
-    "eval:matching": "ts-node --transpile-only scripts/eval-matching.ts"
+    "eval:matching": "ts-node --transpile-only scripts/eval-matching.ts",
+    "dev:memory": "ts-node --transpile-only scripts/dev-memory.ts"
   },
   "author": "Nadav Ben Yehonatan , Chamak Sacha",
   "license": "ISC",

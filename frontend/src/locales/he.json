@@ -1,0 +1,92 @@
+{
+  "app": {
+    "name": "Eureka",
+    "skipToContent": "דילוג לתוכן"
+  },
+  "nav": {
+    "browse": "דיווחים",
+    "myItems": "הדיווחים שלי",
+    "map": "מפה",
+    "chats": "צ'אטים",
+    "report": "דיווח על חפץ",
+    "reportLost": "איבדתי משהו",
+    "reportFound": "מצאתי משהו",
+    "profile": "פרופיל",
+    "signIn": "כניסה",
+    "signUp": "יצירת חשבון",
+    "signOut": "יציאה",
+    "menu": "תפריט",
+    "notifications": "התראות",
+    "language": "שפה",
+    "theme": "ערכת נושא",
+    "themeLight": "בהירה",
+    "themeDark": "כהה",
+    "themeSystem": "לפי המערכת"
+  },
+  "landing": {
+    "headline": "איבדתם משהו? אולי הוא כבר מחכה לכם.",
+    "lead": "מדווחים על מה שאבד או נמצא עם תמונה אחת. Eureka משווה אותה לכל הדיווחים באזור ומודיעה לשניכם כשיש התאמה.",
+    "haveAccount": "כבר דיווחתם על משהו?",
+    "howTitle": "איך זה עובד",
+    "step1Title": "מצלמים",
+    "step1Body": "מוסיפים תמונה, מקום ותאריך. Eureka קוראת את הפרטים מהתמונה בשבילכם.",
+    "step2Title": "Eureka משווה",
+    "step2Body": "היא מחפשת דיווחים על אותו חפץ בסביבה ומשווה את התמונות זו לצד זו.",
+    "step3Title": "מאשרים ונפגשים",
+    "step3Body": "כששניכם מאשרים שזה אותו חפץ, מתכתבים ומתאמים מסירה.",
+    "exampleTitle": "כך נראית התאמה",
+    "exampleCaption": "שני דיווחים, קשורים יחד עם הסיבות ש-Eureka מצאה.",
+    "exampleReason1": "אותה פינה קרועה בצד שמאל למטה",
+    "exampleReason2": "ראשי התיבות ⁦N.B.⁩ מוטבעים בחזית",
+    "exampleLostWhere": "תל אביב, שדרות רוטשילד",
+    "exampleFoundWhere": "תל אביב, כיכר הבימה",
+    "exampleCategory": "ארנק עור חום"
+  },
+  "tag": {
+    "lost": "אבד",
+    "found": "נמצא",
+    "number": "תווית {{number}}",
+    "score": "התאמה של {{score}}%"
+  },
+  "auth": {
+    "loginTitle": "טוב לראות אתכם שוב",
+    "loginLead": "נכנסים כדי לראות את הדיווחים וההתאמות שלכם.",
+    "registerTitle": "יצירת חשבון",
+    "registerLead": "צריך אותו כדי לדווח על חפצים ולהתכתב עם מי שמחזיק בחפץ שלכם.",
+    "email": "אימייל",
+    "password": "סיסמה",
+    "passwordHint": "לפחות 8 תווים",
+    "userName": "שם",
+    "phone": "טלפון",
+    "phoneHint": "מוצג רק למי שיש לכם התאמה איתו",
+    "avatar": "תמונת פרופיל (לא חובה)",
+    "submitLogin": "כניסה",
+    "submitRegister": "יצירת חשבון",
+    "or": "או",
+    "noAccount": "חדשים ב-Eureka?",
+    "haveAccount": "כבר יש לכם חשבון?",
+    "invalidCredentials": "האימייל והסיסמה לא תואמים לאף חשבון.",
+    "networkError": "אין חיבור לשרת. בדקו את החיבור ונסו שוב.",
+    "googleFailed": "הכניסה עם Google לא הצליחה. נסו שוב או היכנסו עם אימייל.",
+    "registered": "החשבון נוצר. היכנסו כדי להמשיך.",
+    "errors": {
+      "email": "הזינו כתובת אימייל תקינה",
+      "password": "לפחות 8 תווים",
+      "userName": "הזינו שם באורך 2–40 תווים",
+      "phone": "הזינו מספר טלפון"
+    }
+  },
+  "common": {
+    "loading": "טוען…",
+    "retry": "נסו שוב",
+    "back": "חזרה",
+    "cancel": "ביטול",
+    "save": "שמירה",
+    "delete": "מחיקה",
+    "close": "סגירה",
+    "somethingWrong": "משהו השתבש",
+    "notFoundTitle": "הדף הזה לא קיים",
+    "notFoundBody": "ייתכן שהקישור ישן או שהחפץ הוסר.",
+    "goHome": "לעמוד הבית"
+  }
+}
