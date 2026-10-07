@@ -103,7 +103,7 @@ const generateToken = (
   const refreshToken = jwt.sign(
     { _id: _id, random: random },
     process.env.TOKEN_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
   );
   return { accessToken, refreshToken };
 };

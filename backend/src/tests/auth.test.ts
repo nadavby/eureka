@@ -223,7 +223,7 @@ describe("Auth Tests", () => {
     const refreshToken = jwt.sign(
       payload,
       process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
     );
     const response = await request(app)
       .post(baseUrl + "/refresh")
@@ -237,7 +237,7 @@ describe("Auth Tests", () => {
     const refreshToken = jwt.sign(
       payload,
       process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
     );
     const response = await request(app)
       .post(baseUrl + "/refresh")
@@ -305,7 +305,7 @@ describe("Auth Tests", () => {
     const refreshToken = jwt.sign(
       payload,
       process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
     );
     const response = await request(app)
       .post(baseUrl + "/logout")
@@ -319,7 +319,7 @@ describe("Auth Tests", () => {
     const refreshToken = jwt.sign(
       payload,
       process.env.TOKEN_SECRET as string,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION }
+      { expiresIn: process.env.REFRESH_TOKEN_EXPIRATION as jwt.SignOptions["expiresIn"] }
     );
     const response = await request(app)
       .post(baseUrl + "/logout")
