@@ -23,6 +23,8 @@ export interface IDemoTemplate {
   botReply: string;
   lost: DemoItemTemplate;
   found: DemoItemTemplate;
+  /** Storage ids of the two template images (image URL -> publicId), so a reseed can delete them. */
+  imageIds?: Record<string, string>;
 }
 
 const side = {
@@ -46,6 +48,7 @@ const schema = new mongoose.Schema<IDemoTemplate>(
     botReply: { type: String, required: true },
     lost: side,
     found: side,
+    imageIds: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }
 );

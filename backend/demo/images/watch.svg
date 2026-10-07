@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- gold watch with a green dial and a brown leather strap, engraved M and R, on a gym bench -->
+  <rect width="400" height="300" fill="#2b2f36"/>
+  <rect x="0" y="120" width="400" height="90" fill="#3a3f48"/>
+  <ellipse cx="200" cy="215" rx="140" ry="12" fill="#000" opacity=".3"/>
+  <rect x="40" y="150" width="320" height="30" rx="12" fill="#7b4a2c"/>
+  <g fill="#5a341d"><circle cx="80" cy="165" r="3"/><circle cx="100" cy="165" r="3"/><circle cx="120" cy="165" r="3"/></g>
+  <circle cx="200" cy="165" r="56" fill="#d4af37"/><circle cx="200" cy="165" r="44" fill="#1f5e43"/>
+  <line x1="200" y1="165" x2="200" y2="134" stroke="#f7f7f5" stroke-width="4" stroke-linecap="round"/>
+  <line x1="200" y1="165" x2="222" y2="176" stroke="#f7f7f5" stroke-width="3" stroke-linecap="round"/>
+  <text x="200" y="250" font-family="Georgia, serif" font-size="20" fill="#d4af37" text-anchor="middle" font-style="italic">M &amp; R</text>
+</svg>
