@@ -114,20 +114,22 @@ const logout = async (req: Request, res: Response) => {
   res.status(200).json({ message: "Logged out" });
 };
 
-const sharesMatch = async (a: string, b: string) =>
+/** Contact details are shared only once both owners confirmed a match between them. */
+const sharesConfirmedMatch = async (a: string, b: string) =>
   !!(await matchModel.exists({
+    confirmedAt: { $exists: true },
     $or: [
       { userId1: a, userId2: b },
       { userId1: b, userId2: a },
     ],
   }));
 
-/** Contact details (email, phone) are visible only to the user themself and to users they share a match with. */
+/** Contact details (email, phone) are visible only to the user themself and to users they share a confirmed match with. */
 const getUserById = async (req: Request, res: Response) => {
   const user = await userModel.findById(req.params.id);
   if (!user) throw notFound("User not found");
   const viewer = req.user?.id;
-  const canSeeContact = !!viewer && (viewer === req.params.id || (await sharesMatch(viewer, req.params.id)));
+  const canSeeContact = !!viewer && (viewer === req.params.id || (await sharesConfirmedMatch(viewer, req.params.id)));
   if (canSeeContact) {
     res.json(user);
     return;

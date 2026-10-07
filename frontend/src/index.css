@@ -155,3 +155,38 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Map pins: a tiny claim tag with a punched hole (see src/features/map/leaflet.ts). */
+.eureka-pin {
+  display: block;
+  width: 28px;
+  height: 36px;
+  background: var(--manila);
+  border: 2px solid var(--manila-edge);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 72%, 50% 100%, 0 72%, 0 6px);
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.25));
+}
+.eureka-pin > span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 5px auto 0;
+  border-radius: 9999px;
+  background: var(--background);
+}
+.eureka-pin--lost {
+  background: var(--lost);
+  border-color: var(--lost);
+}
+.eureka-pin--found {
+  background: var(--found);
+  border-color: var(--found);
+}
+/* Leaflet controls follow the theme */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--muted);
+}
+.dark .leaflet-tile-pane {
+  filter: brightness(0.75) contrast(1.1) saturate(0.8);
+}

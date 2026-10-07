@@ -36,8 +36,9 @@ const deleteById = async (req: Request, res: Response) => {
 };
 
 /**
- * Each side confirms once. When both have confirmed, both items are resolved and every
- * match, chat and notification involving either item is cleaned up.
+ * Each side confirms once. When both have confirmed, both items are resolved, the match is
+ * marked confirmed (owners can now see each other's contact details) and every other match
+ * on either item is removed with its chat and notifications.
  */
 const confirmMatch = async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -61,8 +62,11 @@ const confirmMatch = async (req: Request, res: Response) => {
     const itemIds = [match.item1Id, match.item2Id];
     await itemModel.updateMany({ _id: { $in: itemIds } }, { isResolved: true });
 
+    await matchModel.updateOne({ _id: matchId }, { confirmedAt: new Date() });
+
+    // Every OTHER match on these two items is obsolete now; this one and its chat are kept.
     const related = await matchModel.find(
-      { $or: [{ item1Id: { $in: itemIds } }, { item2Id: { $in: itemIds } }] },
+      { _id: { $ne: matchId }, $or: [{ item1Id: { $in: itemIds } }, { item2Id: { $in: itemIds } }] },
       { _id: 1 }
     );
     const relatedIds = related.map((m) => m._id.toString());
@@ -70,7 +74,11 @@ const confirmMatch = async (req: Request, res: Response) => {
     await chatModel.deleteMany({ matchId: { $in: relatedIds } });
     await matchModel.deleteMany({ _id: { $in: relatedIds } });
 
-    res.json({ message: "Match fully confirmed and completed", status: "FULLY_CONFIRMED", match: updated });
+    res.json({
+      message: "Match fully confirmed and completed",
+      status: "FULLY_CONFIRMED",
+      match: await matchModel.findById(matchId),
+    });
     return;
   }
 

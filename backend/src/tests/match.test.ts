@@ -325,11 +325,13 @@ describe("Match confirmation", () => {
     expect(lost.body.isResolved).toBe(true);
     expect(found.body.isResolved).toBe(true);
 
-    const getMatch = await request(app)
-      .get(`/match/${matchId}`)
-      .set(auth(owner));
-    expect(getMatch.statusCode).toBe(404);
+    // The confirmed match (and its chat) is kept; both owners can now see each other's contact details.
+    const getMatch = await request(app).get(`/match/${matchId}`).set(auth(owner));
+    expect(getMatch.statusCode).toBe(200);
+    expect(getMatch.body.confirmedAt).toBeDefined();
     expect(await notificationModel.countDocuments({ matchId })).toBe(0);
+    const finderProfile = await request(app).get(`/auth/${finder._id}`).set(auth(owner));
+    expect(finderProfile.body.phoneNumber).toBe(finder.phoneNumber);
   });
 });
 

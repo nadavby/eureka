@@ -45,6 +45,7 @@ const getAllItems = async (req: Request, res: Response) => {
   const query: Record<string, unknown> = {};
   if (req.query.itemType) query.itemType = req.query.itemType;
   if (req.query.userId) query.userId = req.query.userId;
+  if (req.query.open === "true") query.isResolved = false;
   res.json(await itemModel.find(query).sort({ createdAt: -1 }));
 };
 

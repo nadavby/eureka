@@ -88,5 +88,131 @@
     "notFoundTitle": "This page doesn't exist",
     "notFoundBody": "The link may be old, or the item was removed.",
     "goHome": "Go to the home page"
+  },
+  "browse": {
+    "title": "Open reports",
+    "lead": "Items people have lost or found and are still waiting for.",
+    "search": "Search reports",
+    "searchPlaceholder": "Search: black wallet, keys with a red tag…",
+    "typeFilter": "Lost or found",
+    "all": "All",
+    "category": "Category",
+    "anyCategory": "Any category",
+    "count_one": "{{count}} report",
+    "count_other": "{{count}} reports",
+    "empty": "No open reports yet",
+    "emptyBody": "When someone reports a lost or found item, it shows up here.",
+    "noResults": "Nothing matches these filters",
+    "noResultsBody": "Try fewer words or another category."
+  },
+  "mine": {
+    "title": "My items",
+    "lead": "What you reported, and how matching is going.",
+    "empty": "You haven't reported anything yet",
+    "emptyBody": "Report something you lost or found. Eureka starts looking for a match right away."
+  },
+  "status": {
+    "analyzing": "Reading the photo",
+    "searching": "Looking for matches",
+    "failed": "Matching failed",
+    "noMatch": "No match yet",
+    "resolved": "Returned",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches"
+  },
+  "categories": {
+    "wallet": "Wallet",
+    "keys": "Keys",
+    "phone": "Phone",
+    "bag": "Bag or backpack",
+    "id_card": "ID or card",
+    "glasses": "Glasses",
+    "watch": "Watch",
+    "jewelry": "Jewelry",
+    "headphones": "Headphones",
+    "laptop": "Laptop",
+    "tablet": "Tablet",
+    "camera": "Camera",
+    "umbrella": "Umbrella",
+    "clothing": "Clothing",
+    "toy": "Toy",
+    "bicycle": "Bicycle or scooter",
+    "pet": "Pet",
+    "documents": "Documents",
+    "other": "Something else"
+  },
+  "colors": {
+    "black": "Black",
+    "white": "White",
+    "gray": "Gray",
+    "silver": "Silver",
+    "gold": "Gold",
+    "brown": "Brown",
+    "beige": "Beige",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "navy": "Navy",
+    "purple": "Purple",
+    "pink": "Pink",
+    "multicolored": "Multicolored"
+  },
+  "report": {
+    "kicker": {
+      "lost": "New lost report",
+      "found": "New found report"
+    },
+    "title": {
+      "lost": "What did you lose?",
+      "found": "What did you find?"
+    },
+    "progress": "Report progress",
+    "step": {
+      "photo": "Photo",
+      "details": "Details",
+      "place": "Place and date"
+    },
+    "photoTitle": "Add a photo",
+    "photoHint": {
+      "lost": "An old photo of the item works well. Eureka uses it to recognise the item in finders' photos.",
+      "found": "Photograph the item as it is, in good light. Don't include anyone's ID number or card details."
+    },
+    "photoCta": "Choose a photo or drop it here",
+    "photoFormats": "JPEG, PNG, WebP or HEIC, up to 8 MB",
+    "photoPreview": "Selected photo",
+    "photoReplace": "Choose another photo",
+    "category": "Category",
+    "categoryPlaceholder": "Choose a category",
+    "colors": "Colors",
+    "brand": "Brand (if you know it)",
+    "description": "Anything that makes it stand out",
+    "descriptionPlaceholder": {
+      "lost": "A scratch on the back, a sticker, what was inside…",
+      "found": "Where exactly it was, its condition, anything attached to it…"
+    },
+    "descriptionHint": "Details like damage, stickers or keychains help most. Eureka also reads them from the photo.",
+    "where": {
+      "lost": "Where did you lose it?",
+      "found": "Where did you find it?"
+    },
+    "when": {
+      "lost": "When did you lose it?",
+      "found": "When did you find it?"
+    },
+    "useMyLocation": "Use my location",
+    "locateFailed": "We couldn't get your location. Tap the map instead.",
+    "mapHint": "Tap the map to drop the pin, then drag it to adjust.",
+    "placeName": "Place name",
+    "next": "Next",
+    "submit": "Report and start matching",
+    "submitted": "Reported. Eureka is looking for matches.",
+    "submitFailed": "The report couldn't be sent. Check your connection and try again.",
+    "errors": {
+      "photo": "Add a photo to continue.",
+      "category": "Choose a category to continue.",
+      "location": "Drop a pin on the map."
+    }
   }
 }

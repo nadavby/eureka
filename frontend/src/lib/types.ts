@@ -33,6 +33,7 @@ export interface Item {
   description?: string;
   date: string;
   location: { lat: number; lng: number };
+  placeName?: string;
   colors: string[];
   brand?: string;
   material?: string;

@@ -8,3 +8,4 @@ backend/public/items/*
 backend/public/users/*
 !backend/public/**/.gitkeep
 frontend/.env
+.claude/

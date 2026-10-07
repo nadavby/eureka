@@ -13,6 +13,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { useSession } from "@/features/auth/session";
+import { useLiveItemStatus } from "@/features/items/hooks";
 import { cn } from "@/lib/utils";
 import { LanguageMenu, ThemeMenu } from "./Preferences";
 
@@ -118,6 +119,7 @@ const MobileNav = () => {
 export const AppShell = () => {
   const { t } = useTranslation();
   const { userId } = useSession();
+  useLiveItemStatus();
 
   return (
     <div className="flex min-h-dvh flex-col">

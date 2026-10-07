@@ -6,6 +6,9 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import { LandingPage } from "@/features/landing/LandingPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { BrowsePage } from "@/features/items/BrowsePage";
+import { MyItemsPage } from "@/features/items/MyItemsPage";
+import { ReportPage } from "@/features/report/ReportPage";
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +20,11 @@ export const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       {
         element: <RequireAuth />,
-        children: [],
+        children: [
+          { path: "/items", element: <BrowsePage /> },
+          { path: "/items/mine", element: <MyItemsPage /> },
+          { path: "/report/:type", element: <ReportPage /> },
+        ],
       },
       { path: "*", element: <NotFoundPage /> },
     ],

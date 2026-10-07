@@ -16,6 +16,8 @@ export interface IMatch {
   verdict?: "match" | "possible" | "no_match";
   reasons?: string[];
   conflicts?: string[];
+  /** Set when both owners confirmed; the match and its chat are kept, contact details are shared. */
+  confirmedAt?: Date;
 }
 
 export const pairKeyOf = (a: string, b: string) => [a, b].sort().join(":");
@@ -33,6 +35,7 @@ const matchSchema = new mongoose.Schema<IMatch>(
     verdict: { type: String, enum: ["match", "possible", "no_match"] },
     reasons: { type: [String], default: [] },
     conflicts: { type: [String], default: [] },
+    confirmedAt: Date,
   },
   { timestamps: true }
 );

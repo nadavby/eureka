@@ -101,3 +101,17 @@ describe("item security", () => {
     expect((await request(app).get("/items?userId=not-an-id")).status).toBe(400);
   });
 });
+
+describe("item listing", () => {
+  it("filters to open items and keeps the place name", async () => {
+    const res = await postItem(app, owner.token, { ...itemFields({ category }), placeName: "Tel Aviv, Habima Square" } as never);
+    expect(res.status).toBe(201);
+    expect(res.body.placeName).toBe("Tel Aviv, Habima Square");
+    await itemModel.updateOne({ _id: res.body._id }, { isResolved: true });
+
+    const all = await request(app).get(`/items?userId=${owner.id}`);
+    const open = await request(app).get(`/items?userId=${owner.id}&open=true`);
+    expect(all.body.some((i: { _id: string }) => i._id === res.body._id)).toBe(true);
+    expect(open.body.some((i: { _id: string }) => i._id === res.body._id)).toBe(false);
+  });
+});

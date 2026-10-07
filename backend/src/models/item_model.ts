@@ -10,6 +10,8 @@ export interface IItem {
   itemType: "lost" | "found";
   description?: string;
   location?: { lat: number; lng: number } | string;
+  /** Human-readable place, e.g. "Tel Aviv, Habima Square" (from the map or typed). */
+  placeName?: string;
   date?: Date;
   category?: string;
   colors?: string[];
@@ -52,6 +54,7 @@ const itemSchema = new mongoose.Schema<IItem>(
     description: String,
     date: { type: Date, required: true },
     location: { type: mongoose.Schema.Types.Mixed, required: true },
+    placeName: String,
     category: { type: String, required: true },
     colors: { type: [String], default: [] },
     brand: String,
