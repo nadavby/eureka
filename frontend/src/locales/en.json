@@ -271,5 +271,18 @@
       "theyConfirmed": "They confirmed, waiting for you",
       "confirmed": "Both confirmed"
     }
+  },
+  "chat": {
+    "conversations": "Conversations",
+    "thread": "Conversation",
+    "viewMatch": "View match",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "sent": "Sent",
+    "read": "Read",
+    "emptyThread": "No messages yet. Ask something only the owner would know.",
+    "noConversations": "Conversations start when Eureka finds a match for one of your items.",
+    "pickTitle": "Choose a conversation",
+    "pickBody": "Each conversation belongs to one match."
   }
 }

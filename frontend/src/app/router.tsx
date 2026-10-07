@@ -11,6 +11,7 @@ import { MyItemsPage } from "@/features/items/MyItemsPage";
 import { ReportPage } from "@/features/report/ReportPage";
 import { ItemDetailPage } from "@/features/items/ItemDetailPage";
 import { MatchPage } from "@/features/matches/MatchPage";
+import { ChatsPage } from "@/features/chat/ChatsPage";
 
 export const router = createBrowserRouter([
   {
@@ -28,6 +29,8 @@ export const router = createBrowserRouter([
           { path: "/report/:type", element: <ReportPage /> },
           { path: "/items/:id", element: <ItemDetailPage /> },
           { path: "/matches/:id", element: <MatchPage /> },
+          { path: "/chats", element: <ChatsPage /> },
+          { path: "/chats/:matchId", element: <ChatsPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },
