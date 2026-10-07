@@ -43,6 +43,12 @@ export const getChatNamespace = () => {
   return chatNamespace;
 };
 
+/** Sends an event to every socket of a user. A no-op when no socket server is running (scripts, tests). */
+export const emitToUser = (userId: string, event: string, payload: unknown) => {
+  if (!io) return;
+  io.to(userId).emit(event, payload);
+};
+
 // The same notification can be emitted twice in quick succession (both sides of a match);
 // drop duplicates within a short window.
 const recentNotifications = new Map<string, number>();
