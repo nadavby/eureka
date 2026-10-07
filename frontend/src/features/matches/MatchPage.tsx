@@ -94,9 +94,11 @@ export const MatchPage = () => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
-      <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted-foreground">{t("match.kicker")}</p>
-      <h1 className="text-2xl font-bold sm:text-3xl">{t("match.title")}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{t("match.lead")}</p>
+      <p className="mb-1 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+        {match.data?.confirmedAt ? t("match.kickerConfirmed") : t("match.kicker")}
+      </p>
+      <h1 className="text-2xl font-bold sm:text-3xl">{match.data?.confirmedAt ? t("match.titleConfirmed") : t("match.title")}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{match.data?.confirmedAt ? t("match.leadConfirmed") : t("match.lead")}</p>
 
       <div className="mt-16 sm:mt-20">
         {ready ? (

@@ -14,6 +14,7 @@ import { googleSignIn, login } from "./api";
 import { AuthLayout } from "./AuthLayout";
 import { GoogleButton } from "./GoogleButton";
 import { useSession } from "./session";
+import { TryDemoButton } from "@/features/demo/TryDemoButton";
 
 const schema = z.object({ email: z.string().trim().email(), password: z.string().min(1) });
 type FormValues = z.infer<typeof schema>;
@@ -28,8 +29,10 @@ export const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({ resolver: zodResolver(schema) });
+  // Redirect only if the visitor arrived signed in; signing in here navigates on its own.
+  const [arrivedSignedIn] = useState(() => !!userId);
 
-  if (userId) return <Navigate to={from} replace />;
+  if (arrivedSignedIn) return <Navigate to={from} replace />;
 
   const finish = (res: { accessToken: string; refreshToken: string }) => {
     signIn(res.accessToken, res.refreshToken);
@@ -93,6 +96,10 @@ export const LoginPage = () => {
         }}
         onError={() => setError(t("auth.googleFailed"))}
       />
+      <div className="mt-6 border-t pt-5 text-center">
+        <TryDemoButton variant="outline" size="default" className="w-full" />
+        <p className="mt-2 text-xs text-muted-foreground">{t("demo.hint")}</p>
+      </div>
     </AuthLayout>
   );
 };

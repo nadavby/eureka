@@ -270,7 +270,10 @@
       "waiting": "You confirmed, waiting for them",
       "theyConfirmed": "They confirmed, waiting for you",
       "confirmed": "Both confirmed"
-    }
+    },
+    "kickerConfirmed": "Confirmed match",
+    "titleConfirmed": "It's a match",
+    "leadConfirmed": "You both confirmed this is the same item."
   },
   "chat": {
     "conversations": "Conversations",
@@ -308,5 +311,14 @@
     "qrBody": "Stick it on things you carry. Whoever finds them can scan it to reach your profile.",
     "publicLead": "Open reports",
     "noOpenReports": "No open reports"
+  },
+  "demo": {
+    "try": "Try the demo",
+    "hint": "No sign-up. You get your own lost wallet, a match, and the finder waiting in the chat.",
+    "banner": "You're in a private demo. Report things, chat, confirm. Everything is deleted within a day.",
+    "leave": "Leave the demo",
+    "readOnly": "Demo accounts can't be edited.",
+    "DEMO_BUSY": "The demo is busy right now. Try again in a few minutes.",
+    "DEMO_UNAVAILABLE": "The demo is being prepared. Try again in a minute."
   }
 }

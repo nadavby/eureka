@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Camera, Handshake, ScanSearch } from "lucide-react";
@@ -6,6 +7,7 @@ import { ClaimTag } from "@/components/claim-tag/ClaimTag";
 import { TiedTags } from "@/components/claim-tag/TiedTags";
 import { useSession } from "@/features/auth/session";
 import { ParticleWordmark } from "./ParticleWordmark";
+import { TryDemoButton } from "@/features/demo/TryDemoButton";
 import walletLost from "./example-lost.svg";
 import walletFound from "./example-found.svg";
 
@@ -18,7 +20,9 @@ const STEPS = [
 export const LandingPage = () => {
   const { t } = useTranslation();
   const { userId } = useSession();
-  if (userId) return <Navigate to="/items" replace />;
+  // Only visitors who arrive already signed in are sent on; signing in here (e.g. the demo) navigates itself.
+  const [arrivedSignedIn] = useState(() => !!userId);
+  if (arrivedSignedIn) return <Navigate to="/items" replace />;
 
   return (
     <>
@@ -37,6 +41,10 @@ export const LandingPage = () => {
               <Button asChild size="lg" variant="outline" className="h-12 px-6 text-base">
                 <Link to="/report/found">{t("nav.reportFound")}</Link>
               </Button>
+            </div>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <TryDemoButton variant="ghost" size="default" className="text-primary" />
+              <p className="max-w-sm text-xs text-muted-foreground">{t("demo.hint")}</p>
             </div>
             <p className="mt-5 text-sm text-muted-foreground">
               {t("landing.haveAccount")}{" "}
