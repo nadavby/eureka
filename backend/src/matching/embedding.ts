@@ -1,3 +1,6 @@
+import { config } from "../lib/config";
+import { AiClient } from "./ai-client";
+import { ImageData } from "./image-loader";
 import { ItemAttributes, ItemType } from "./types";
 
 export interface EmbeddableItem {
@@ -37,3 +40,7 @@ export const canonicalText = (item: EmbeddableItem): string => {
     .map(([key, value]) => `${key}: ${value}`)
     .join("\n");
 };
+
+/** One multimodal vector for the photo together with the item's canonical text. */
+export const embedItem = (ai: AiClient, image: ImageData, item: EmbeddableItem): Promise<number[]> =>
+  ai.embed({ model: config.GEMINI_EMBED_MODEL, parts: [{ inlineData: image }, { text: canonicalText(item) }] });
