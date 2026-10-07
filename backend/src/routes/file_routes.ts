@@ -1,54 +1,18 @@
-/** @format */
+import express, { Request, Response } from "express";
+import { config } from "../lib/config";
+import { badRequest } from "../lib/errors";
+import { uploadLimiter } from "../middleware/security";
+import { imageUpload } from "../middleware/upload";
 
-import express from "express";
 const router = express.Router();
-import multer from "multer";
-
-/**
- * @swagger
- * tags:
- *   name: Files
- *   description: File upload API
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     FileResponse:
- *       type: object
- *       properties:
- *         url:
- *           type: string
- *           description: The URL of the uploaded file
- *       example:
- *         url: http://example.com/public/users/1648372893654.jpg
- */
-
-const base = process.env.DOMAIN_BASE + "/";
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/users");
-  },
-  filename: function (req, file, cb) {
-    const ext = file.originalname
-      .split(".")
-      .filter(Boolean) 
-      .slice(1)
-      .join(".");
-    cb(null, Date.now() + "." + ext);
-  },
-});
-const upload = multer({ storage: storage });
 
 /**
  * @swagger
  * /file:
  *   post:
- *     summary: Upload a file
- *     description: Upload a single file to the server
- *     tags:
- *       - Files
+ *     summary: Upload a profile picture
+ *     description: Used during registration, before the user has an account, so no authentication is required. Images only, up to 5 MB.
+ *     tags: [Files]
  *     requestBody:
  *       required: true
  *       content:
@@ -59,24 +23,17 @@ const upload = multer({ storage: storage });
  *               file:
  *                 type: string
  *                 format: binary
- *                 description: The file to upload
- *             required:
- *               - file
  *     responses:
  *       200:
- *         description: File uploaded successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/FileResponse'
+ *         description: The public URL of the uploaded image
  *       400:
- *         description: Bad request, invalid file or missing file
- *       500:
- *         description: Server error
+ *         description: Missing file or not an image
+ *       413:
+ *         description: File larger than 5 MB
  */
-router.post("/", upload.single("file"), function (req, res) {
-  console.log("router.post(/file: " + base + req.file?.path);
-  res.status(200).send({ url: base + req.file?.path });
+router.post("/", uploadLimiter, imageUpload("users").single("file"), (req: Request, res: Response) => {
+  if (!req.file) throw badRequest("Missing file");
+  res.status(200).json({ url: `${config.DOMAIN_BASE}/public/users/${req.file.filename}` });
 });
 
-export = router;
+export default router;

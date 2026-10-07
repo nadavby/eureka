@@ -1,294 +1,133 @@
-/** @format */
 import { Request, Response } from "express";
 import itemModel, { IItem } from "../models/item_model";
 import userModel from "../models/user_model";
+import matchModel, { IMatch } from "../models/match_model";
+import notificationModel, { INotification } from "../models/notification_model";
+import chatModel from "../models/chat_model";
 import { emitNotification } from "../services/notification.socket.service";
 import { MatchingService } from "../services/matching-service";
 import visionService from "../services/vision-service";
-import matchModel, { IMatch } from "../models/match_model";
-import notificationModel, { INotification } from "../models/notification_model";
+import { config } from "../lib/config";
+import { badRequest, forbidden, notFound, unauthorized } from "../lib/errors";
+import { logger } from "../lib/logger";
 
-const findPotentialMatches = async (
-  item: IItem
-): Promise<Array<{ item: IItem; score: number }>> => {
+const MATCH_THRESHOLD = 70;
+
+const findPotentialMatches = async (item: IItem) => {
+  const oppositeType = item.itemType === "lost" ? "found" : "lost";
+  const candidates = await itemModel.find({ itemType: oppositeType, isResolved: false });
+  const matches = await MatchingService(item, candidates);
+  return matches.map((m) => ({ item: m.item, score: m.confidenceScore }));
+};
+
+const analyzeImage = async (imageUrl: string): Promise<IItem["visionApiData"]> => {
   try {
-    const oppositeType = item.itemType === "lost" ? "found" : "lost";
-    const potentialMatches = await itemModel.find({
-      itemType: oppositeType,
-      isResolved: false,
-    });
+    const analysis = await visionService.getImageAnalysis(imageUrl);
+    return {
+      labels: analysis.labels,
+      objects: analysis.objects.map((obj) => ({
+        name: obj.name,
+        score: obj.score,
+        boundingBox: obj.boundingBox || { x: 0, y: 0, width: 0, height: 0 },
+      })),
+      texts: analysis.texts,
+      logos: analysis.logos,
+    };
+  } catch (err) {
+    logger.warn({ err }, "Image analysis failed; continuing without vision data");
+    return { labels: [], objects: [] };
+  }
+};
 
-    const matches = await MatchingService(item, potentialMatches);
-    const significantMatches = matches.map((match) => ({
-      item: match.item,
-      score: match.confidenceScore,
-    }));
-    return significantMatches;
-  } catch (error) {
-    console.error("Error finding potential matches:", error);
-    return [];
+const notifyMatch = async (userId: string, matchId: string, itemType: string) => {
+  const notification: INotification = {
+    type: "MATCH_FOUND",
+    title: "Potential Match Found!",
+    message: `We found a potential match for your ${itemType} item!`,
+    userId,
+    matchId,
+    isRead: false,
+  };
+  const saved = await notificationModel.create(notification);
+  emitNotification(userId, saved);
+};
+
+const createMatches = async (savedItem: IItem & { _id: unknown }) => {
+  const potentialMatches = await findPotentialMatches(savedItem);
+  const strong = potentialMatches.filter((m) => m.score > MATCH_THRESHOLD);
+  for (const { item: matchedItem, score } of strong) {
+    if (!matchedItem._id) continue;
+    const match: IMatch = {
+      item1Id: String(matchedItem._id),
+      userId1: matchedItem.userId,
+      item2Id: String(savedItem._id),
+      userId2: savedItem.userId,
+      matchScore: score,
+      user1Confirmed: false,
+      user2Confirmed: false,
+    };
+    const savedMatch = await matchModel.create(match);
+    const matchId = savedMatch._id.toString();
+    await notifyMatch(matchedItem.userId, matchId, matchedItem.itemType);
+    await notifyMatch(savedItem.userId, matchId, savedItem.itemType);
+    logger.info({ matchId, score }, "Match created");
   }
 };
 
 const uploadItem = async (req: Request, res: Response) => {
+  const files = req.files as { [field: string]: Express.Multer.File[] } | undefined;
+  const file = files?.file?.[0] || files?.image?.[0];
+  if (!file) throw badRequest("Missing image: upload it as 'file' or 'image'");
+
+  const userId = req.user!.id;
+  const user = await userModel.findById(userId);
+  if (!user) throw unauthorized("User no longer exists");
+
+  const imageUrl = `${config.DOMAIN_BASE}/public/items/${file.filename}`;
+  const savedItem = await itemModel.create({
+    ...req.body,
+    userId,
+    imageUrl,
+    brand: req.body.brand || "",
+    visionApiData: await analyzeImage(imageUrl),
+    isResolved: false,
+  });
+
   try {
-    console.log("Uploading New Item");
-
-    if (!req.body.userId) {
-      console.error("Missing userId in request body");
-      return res.status(400).send("Error");
-    }
-
-    if (!req.body.imageUrl) {
-      console.error("Missing imageUrl in request body");
-      return res.status(400).send();
-    }
-
-    if (typeof req.body.imageUrl !== "string" || !req.body.imageUrl.trim()) {
-      console.error("Invalid imageUrl format:", req.body.imageUrl);
-      return res.status(400).send("Error");
-    }
-
-    if (!req.body.itemType) {
-      console.error("Missing itemType in request body");
-      return res.status(400).send("Error");
-    }
-
-    if (req.body.itemType !== "lost" && req.body.itemType !== "found") {
-      console.error("Invalid itemType:", req.body.itemType);
-      return res.status(400).send("Error");
-    }
-
-    const visionApiData = await enhanceItemWithAI(req.body.imageUrl);
-
-    const user = await userModel.findById(req.body.userId);
-    if (!user) {
-      console.error("User not found:", req.body.userId);
-      return res.status(400).send("Error");
-    }
-
-    let locationData = req.body.location;
-    if (typeof locationData === "string") {
-      try {
-        locationData = JSON.parse(locationData);
-        console.log("Successfully parsed location JSON:", locationData);
-      } catch (e) {
-        console.error("Failed to parse location JSON:", e);
-      }
-    }
-
-    const newItem: IItem = {
-      userId: req.body.userId,
-      imageUrl: req.body.imageUrl,
-      itemType: req.body.itemType,
-      description: req.body.description,
-      location: locationData,
-      date: req.body.date,
-      category: req.body.category,
-      colors: req.body.colors,
-      brand: req.body.brand || "",
-      condition: req.body.condition,
-      flaws: req.body.flaws,
-      material: req.body.material,
-      ownerName: user.userName,
-      ownerEmail: user.email,
-      visionApiData: visionApiData.visionApiData,
-      isResolved: false,
-    };
-
-    const savedItem = await itemModel.create(newItem);
-
-    let potentialMatches: Array<{ item: IItem; score: number }> = [];
-    try {
-      potentialMatches = await findPotentialMatches(savedItem);
-    } catch (error) {
-      console.error("Error finding potential matches:", error);
-      potentialMatches = [];
-    }
-
-    try {
-      const highConfidenceMatches = potentialMatches.filter(
-        (match) => match.score > 70
-      );
-
-      if (highConfidenceMatches.length > 0) {
-        console.log(
-          `Found ${highConfidenceMatches.length} high-confidence matches, sending notifications`
-        );
-
-        for (const match of highConfidenceMatches) {
-          const matchedItem = match.item;
-          const matchOwner = await userModel.findById(matchedItem.userId);
-
-          if (matchOwner && matchedItem._id) {
-            const newMatch: IMatch = {
-              item1Id: matchedItem._id,
-              userId1: matchOwner._id,
-              item2Id: savedItem._id,
-              userId2: savedItem.userId,
-              matchScore: match.score,
-              user1Confirmed: false,
-              user2Confirmed: false
-            };
-            const savedMatch = await matchModel.create(newMatch);
-            if (!savedMatch) {
-              res.status(400).send("Error");
-              return;
-            }
-            const newNotification: INotification = {
-              type: "MATCH_FOUND",
-              title: "Potential Match Found!",
-              message: `We found a potential match for your ${matchedItem.itemType} item!`,
-              userId: matchedItem.userId,
-              matchId: savedMatch._id,
-              isRead: false,
-            };
-            const savedNotification =
-              await notificationModel.create(newNotification);
-            if (!savedNotification) {
-              res.status(400).send("Error");
-              return;
-            }
-            emitNotification(savedNotification.userId, savedNotification);
-            const newNotification2: INotification = {
-              type: "MATCH_FOUND",
-              title: "Potential Match Found!",
-              message: `We found a potential match for your ${savedItem.itemType} item!`,
-              userId: savedItem.userId,
-              matchId: savedMatch._id,
-              isRead: false,
-            };
-            const savedNotification2 =
-              await notificationModel.create(newNotification2);
-            if (!savedNotification2) {
-              res.status(400).send("Error");
-              return;
-            }
-            emitNotification(savedNotification2.userId, savedNotification2);
-
-            console.log(
-              `Sent notification to user ${matchedItem.userId} (${matchOwner.email})`
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error notifying matched item owner:", error);
-    }
-
-    return res.status(201).send(newItem);
-  } catch (error) {
-    console.error("Error uploading item:", error);
-     res.status(500).send("Error fetching item: " + (error as Error).message);
-    return;
+    await createMatches(savedItem.toObject());
+  } catch (err) {
+    // The item is saved either way; matching failures must not fail the upload.
+    logger.error({ err, itemId: savedItem._id }, "Matching failed");
   }
+
+  res.status(201).json(savedItem);
 };
 
 const getAllItems = async (req: Request, res: Response) => {
-  try {
-    const itemType = req.query.itemType;
-    const userId = req.query.userId;
-
-    const query: Record<string, unknown> = {};
-
-    if (itemType && (itemType === "lost" || itemType === "found")) {
-      query.itemType = itemType;
-    }
-
-    if (userId) {
-      query.userId = userId;
-    }
-
-    const items = await itemModel.find(query);
-
-    return res.status(200).send(items);
-  } catch (error) {
-    console.error("Error getting items:", error);
-    return res
-      .status(500)
-      .send("Error fetching items: " + (error as Error).message);
-  }
+  const query: Record<string, unknown> = {};
+  if (req.query.itemType) query.itemType = req.query.itemType;
+  if (req.query.userId) query.userId = req.query.userId;
+  res.json(await itemModel.find(query));
 };
 
 const getItemById = async (req: Request, res: Response) => {
-  try {
-    const itemId = req.params.id;
-    const item = await itemModel.findById(itemId);
-
-    if (!item) {
-      return res.status(404).send("Item not found");
-    }
-    return res.status(200).send(item);
-  } catch (error) {
-    console.error("Error getting item by ID:", error);
-    return res
-      .status(500)
-      .send("Error fetching item: " + (error as Error).message);
-  }
+  const item = await itemModel.findById(req.params.id);
+  if (!item) throw notFound("Item not found");
+  res.json(item);
 };
 
 const deleteItem = async (req: Request, res: Response) => {
-  try {
-    const item = await itemModel.findById(req.params.id);
-    if (!item) {
-      res.status(404).send("Item not found");
-      return;
-    }
- 
-    const matches = await matchModel.find({
-      $or: [{ item1Id: req.params.id }, { item2Id: req.params.id }],
-    });
-    if (matches.length > 0) {
-      for (const match of matches) {
-        await notificationModel.deleteMany({
-          matchId: match._id,
-        });
-        await matchModel.findByIdAndDelete(match._id);
-      }
-    }
+  const item = await itemModel.findById(req.params.id);
+  if (!item) throw notFound("Item not found");
+  if (item.userId !== req.user!.id) throw forbidden("You can only delete your own items");
 
-    await itemModel.findByIdAndDelete(req.params.id);
-    res.status(200).send("Item deleted successfully");
-  } catch (error) {
-    res.status(500).send("Error deleting item: " + (error as Error).message);
-  }
+  const matches = await matchModel.find({ $or: [{ item1Id: req.params.id }, { item2Id: req.params.id }] }, { _id: 1 });
+  const matchIds = matches.map((m) => m._id.toString());
+  await notificationModel.deleteMany({ matchId: { $in: matchIds } });
+  await chatModel.deleteMany({ matchId: { $in: matchIds } });
+  await matchModel.deleteMany({ _id: { $in: matchIds } });
+  await item.deleteOne();
+  res.json({ message: "Item deleted successfully" });
 };
 
-const enhanceItemWithAI = async (imageUrl: string) => {
-  try {
-    const visionAnalysisResult = await visionService.getImageAnalysis(imageUrl);
-    const labels = visionAnalysisResult.labels;
-    const objects = visionAnalysisResult.objects.map((obj) => ({
-      name: obj.name,
-      score: obj.score,
-      boundingBox: obj.boundingBox || {
-        x: 0,
-        y: 0,
-        width: 0,
-        height: 0,
-      },
-    })
-  );
-  const texts = visionAnalysisResult.texts;
-  const logos = visionAnalysisResult.logos;
-    return {
-      visionApiData: {
-        labels,
-        objects,
-        texts,
-        logos,
-      },
-    };
-  } catch (error) {
-    console.error("Error enhancing item with AI:", error);
-    return {
-      visionApiData: {
-        labels: [],
-        objects: [],
-      },
-    };
-  }
-};
-
-export { uploadItem, getAllItems, getItemById, deleteItem};
-
+export { uploadItem, getAllItems, getItemById, deleteItem };

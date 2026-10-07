@@ -1,14 +1,19 @@
 /** @format */
 
-import express from "express";
+import express, { RequestHandler } from "express";
 import {
   uploadItem,
   getAllItems,
   getItemById,
   deleteItem,
 } from "../controllers/item_controller";
+import { asyncHandler } from "../lib/async-handler";
 import { requireAuth } from "../middleware/auth";
-import multer from "multer";
+import { uploadLimiter } from "../middleware/security";
+import { imageUpload } from "../middleware/upload";
+import { validate } from "../middleware/validate";
+import { idParams } from "../schemas/common";
+import { createItemBody, listItemsQuery } from "../schemas/item.schema";
 
 const router = express.Router();
 
@@ -77,24 +82,6 @@ const router = express.Router();
  *         createdAt: 2023-01-01T19:00:00.000Z
  */
 
-const base = process.env.DOMAIN_BASE + "/";
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/items");
-  },
-  filename: function (req, file, cb) {
-    const ext = file.originalname.split(".").filter(Boolean).slice(1).join(".");
-    cb(null, Date.now() + "." + ext);
-  },
-});
-
-const upload = multer({
-  storage: storage,
-  fileFilter: function (req, file, cb) {
-    console.log("Received file with field name:", file.fieldname);
-    cb(null, true);
-  },
-});
 
 /**
  * @swagger
@@ -159,68 +146,26 @@ const upload = multer({
  *       500:
  *         description: Server error
  */
+const upload = imageUpload("items").fields([
+  { name: "file", maxCount: 1 },
+  { name: "image", maxCount: 1 },
+]);
+
+// legacy clients send `kind` instead of `itemType` and `name` instead of `description`
+const acceptLegacyFields: RequestHandler = (req, _res, next) => {
+  if (!req.body.itemType && req.body.kind) req.body.itemType = req.body.kind;
+  if (!req.body.description && req.body.name) req.body.description = req.body.name;
+  next();
+};
+
 router.post(
   "/",
   requireAuth,
-  upload.fields([
-    { name: "file", maxCount: 1 },
-    { name: "image", maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      const file = files?.file?.[0] || files?.image?.[0];
-
-      if (!file) {
-        return res
-          .status(400)
-          .send(
-            "Missing required file. Please upload an image with field name 'file' or 'image'."
-          );
-      }
-
-      const imageUrl = base + file.path.replace(/\\/g, '/');
-      req.body.imageUrl = imageUrl;
-      req.body.userId = req.user!.id;
-
-      if (req.body.name) {
-        req.body.description = req.body.description || req.body.name;
-      }
-
-      if (req.body.location) {
-        if (typeof req.body.location === "string") {
-          try {
-            req.body.location = JSON.parse(req.body.location);
-          } catch (e) {
-            console.error("Failed to parse location JSON:", e);
-          }
-        }
-      }
-
-      if (req.body.itemType) {
-        req.body.itemType = req.body.itemType.toLowerCase();
-      } else if (req.body.kind) {
-        req.body.itemType = req.body.kind.toLowerCase();
-      }
-
-      req.file = file;
-
-      if (!req.body.itemType) {
-        return res.status(400).send("Missing required field: itemType");
-      }
-
-      if (req.body.itemType !== "lost" && req.body.itemType !== "found") {
-        return res.status(400).send("Item type must be 'lost' or 'found'");
-      }
-
-      return uploadItem(req, res);
-    } catch (error) {
-      console.error("Error in /items POST route:", error);
-      return res
-        .status(500)
-        .send("Error uploading item: " + (error as Error).message);
-    }
-  }
+  uploadLimiter,
+  ...upload,
+  acceptLegacyFields,
+  validate({ body: createItemBody }),
+  asyncHandler(uploadItem)
 );
 
 /**
@@ -254,7 +199,7 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.get("/", getAllItems);
+router.get("/", validate({ query: listItemsQuery }), asyncHandler(getAllItems));
 
 /**
  * @swagger
@@ -287,7 +232,7 @@ router.get("/", getAllItems);
  *       500:
  *         description: Server error
  */
-router.get("/:id", getItemById);
+router.get("/:id", validate({ params: idParams }), asyncHandler(getItemById));
 
 /**
  * @swagger
@@ -317,6 +262,6 @@ router.get("/:id", getItemById);
  *       500:
  *         description: Server error
  */
-router.delete("/:id", requireAuth, deleteItem);
+router.delete("/:id", requireAuth, validate({ params: idParams }), asyncHandler(deleteItem));
 
 export = router;
