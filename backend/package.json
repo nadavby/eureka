@@ -8,7 +8,8 @@
     "start": "node dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "jest --runInBand --forceExit --coverage"
+    "test": "jest --runInBand --forceExit --coverage",
+    "eval:matching": "ts-node --transpile-only scripts/eval-matching.ts"
   },
   "author": "Nadav Ben Yehonatan , Chamak Sacha",
   "license": "ISC",
