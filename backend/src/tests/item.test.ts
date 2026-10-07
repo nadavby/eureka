@@ -8,8 +8,6 @@ import userModel from "../models/user_model";
 import itemModel from "../models/item_model";
 import matchModel from "../models/match_model";
 import notificationModel from "../models/notification_model";
-import visionService from "../services/vision-service";
-import geminiService from "../services/gemini-service";
 import {
   itemFields,
   listUploadedItemFiles,
@@ -17,18 +15,14 @@ import {
   removeNewUploadedItemFiles,
 } from "./test_utils";
 
-// External Google APIs are mocked so the tests are deterministic and offline.
-jest.mock("../services/vision-service", () => ({
-  __esModule: true,
-  default: { getImageAnalysis: jest.fn() },
-}));
-jest.mock("../services/gemini-service", () => ({
-  __esModule: true,
-  default: { evaluateMatch: jest.fn() },
-}));
+import { queue } from "../jobs";
+import { fakeAi } from "./setup/fake-ai";
 
-const mockedVision = visionService.getImageAnalysis as jest.Mock;
-const mockedGemini = geminiService.evaluateMatch as jest.Mock;
+// Gemini is replaced by a deterministic fake so the tests are offline.
+jest.mock("../matching/ai-client", () => ({
+  ...jest.requireActual("../matching/ai-client"),
+  createAiClient: () => jest.requireActual("./setup/fake-ai").fakeAi,
+}));
 
 let app: Express;
 let accessToken: string;
@@ -57,14 +51,8 @@ beforeAll(async () => {
   filesBefore = listUploadedItemFiles();
   await cleanup();
 
-  mockedVision.mockResolvedValue({
-    labels: ["Wallet", "Leather"],
-    objects: [{ name: "Wallet", score: 0.9 }],
-    texts: [],
-    logos: [],
-  });
   // Low score: no AI match should be created inside this file.
-  mockedGemini.mockResolvedValue({ confidenceScore: 10, reasoning: "mock" });
+  fakeAi.verdict = { ...fakeAi.verdict, score: 10 };
 
   const res = await request(app).post("/auth/register").send({
     email: testEmail,
@@ -140,8 +128,12 @@ describe("Item API Tests", () => {
     expect(res.body.isResolved).toBe(false);
     expect(res.body.location).toEqual({ lat: 32.0853, lng: 34.7818 });
     expect(res.body.imageUrl).toMatch(/\/public\/items\/\d+-[0-9a-f-]+\.png$/);
-    expect(res.body.visionApiData.labels).toEqual(["Wallet", "Leather"]);
-    expect(mockedVision).toHaveBeenCalledWith(res.body.imageUrl);
+    // matching happens in the background
+    expect(res.body.matchingStatus).toBe("analyzing");
+    await queue.drain();
+    const analyzed = await itemModel.findById(res.body._id);
+    expect(analyzed!.matchingStatus).toBe("done");
+    expect(analyzed!.attributes!.description).toBe("mock item");
 
     const saved = await itemModel.findOne({
       userId,
@@ -168,8 +160,8 @@ describe("Item API Tests", () => {
     expect(res.body.itemType).toBe("found");
     expect(res.body.description).toBe("Test found item");
 
-    // The lost item was evaluated by the (mocked) AI matcher, but with a low score.
-    expect(mockedGemini).toHaveBeenCalled();
+    // The pair is compared by the (fake) AI, but scores below the threshold.
+    await queue.drain();
     expect(await matchModel.countDocuments({ userId1: userId })).toBe(0);
 
     const saved = await itemModel.findOne({

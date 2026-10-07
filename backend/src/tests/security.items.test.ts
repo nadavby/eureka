@@ -7,12 +7,15 @@ import { Express } from "express";
 import initApp from "../server";
 import userModel from "../models/user_model";
 import itemModel from "../models/item_model";
-import visionService from "../services/vision-service";
-import geminiService from "../services/gemini-service";
 import { itemFields, listUploadedItemFiles, postItem, removeNewUploadedItemFiles } from "./test_utils";
 
-jest.mock("../services/vision-service", () => ({ __esModule: true, default: { getImageAnalysis: jest.fn() } }));
-jest.mock("../services/gemini-service", () => ({ __esModule: true, default: { evaluateMatch: jest.fn() } }));
+import { fakeAi } from "./setup/fake-ai";
+
+// Gemini is replaced by a deterministic fake so the tests are offline.
+jest.mock("../matching/ai-client", () => ({
+  ...jest.requireActual("../matching/ai-client"),
+  createAiClient: () => jest.requireActual("./setup/fake-ai").fakeAi,
+}));
 
 let app: Express;
 let filesBefore: string[];
@@ -31,8 +34,7 @@ const category = "SecurityItemsCategory";
 beforeAll(async () => {
   app = await initApp();
   filesBefore = listUploadedItemFiles();
-  (visionService.getImageAnalysis as jest.Mock).mockResolvedValue({ labels: [], objects: [], texts: [], logos: [] });
-  (geminiService.evaluateMatch as jest.Mock).mockResolvedValue({ confidenceScore: 0, reasoning: "" });
+  fakeAi.verdict = { ...fakeAi.verdict, score: 0 };
   await userModel.deleteMany({ email: /@sec-items\.test$/ });
   owner = await signUp("itemsOwner");
   other = await signUp("itemsOther");

@@ -12,6 +12,8 @@ import fileRoutes from "./routes/file_routes";
 import itemRoutes from "./routes/item_routes";
 import matchRoutes from "./routes/match_routes";
 import notificationRoutes from "./routes/notification_routes";
+import { queue } from "./jobs";
+import { registerMatchingJobs } from "./matching";
 
 const app = express();
 
@@ -54,7 +56,13 @@ app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
 app.use(notFoundHandler);
 app.use(errorHandler);
 
+let jobsRegistered = false;
+
 const initApp = async (): Promise<Express> => {
+  if (!jobsRegistered) {
+    registerMatchingJobs(queue);
+    jobsRegistered = true;
+  }
   mongoose.connection.on("error", (err) => logger.error({ err }, "MongoDB connection error"));
   await mongoose.connect(config.DB_CONNECTION);
   logger.info("Connected to MongoDB");

@@ -14,10 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@google-cloud/vision": "^4.3.3",
     "@google/genai": "^2.27.0",
-    "@google/generative-ai": "^0.24.0",
-    "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
