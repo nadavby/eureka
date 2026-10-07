@@ -4,6 +4,7 @@ import { config } from "../lib/config";
 import { logger } from "../lib/logger";
 import { AiDisabledError, AiQuotaError, AiResponseError } from "./errors";
 import { RateLimiter } from "./rate-limiter";
+import { FakeAiClient } from "./fake-ai";
 
 export { AiDisabledError, AiQuotaError, AiResponseError };
 export type { Part };
@@ -92,7 +93,9 @@ export class GeminiAiClient implements AiClient {
 }
 
 export const createAiClient = (): AiClient =>
-  new GeminiAiClient(
+  config.AI_FAKE
+    ? new FakeAiClient(config.EMBEDDING_DIMENSIONS)
+    : new GeminiAiClient(
     config.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: config.GEMINI_API_KEY }) : null,
     new RateLimiter(config.AI_REQUESTS_PER_MINUTE, 60_000),
     { embedDimensions: config.EMBEDDING_DIMENSIONS }

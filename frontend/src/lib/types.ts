@@ -59,6 +59,8 @@ export interface Match {
   conflicts: string[];
   user1Confirmed: boolean;
   user2Confirmed: boolean;
+  /** Set when both owners confirmed. */
+  confirmedAt?: string;
   createdAt: string;
 }
 

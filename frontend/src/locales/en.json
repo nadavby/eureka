@@ -214,5 +214,62 @@
       "category": "Choose a category to continue.",
       "location": "Drop a pin on the map."
     }
+  },
+  "item": {
+    "category": "Category",
+    "date": {
+      "lost": "Lost on",
+      "found": "Found on"
+    },
+    "place": "Place",
+    "brand": "Brand",
+    "features": "Details",
+    "visibleText": "Text on it",
+    "aiNote": "Details and text were read from the photo by Eureka.",
+    "matchesTitle": "Possible matches",
+    "noMatches": "No match yet. Eureka will tell you as soon as a similar report comes in.",
+    "searching": "Eureka is still comparing this report with others nearby.",
+    "delete": "Delete report",
+    "deleteTitle": "Delete this report?",
+    "deleteBody": "Its photo, its matches and their chats are deleted too. This can't be undone.",
+    "deleted": "Report deleted",
+    "deleteFailed": "The report couldn't be deleted. Try again.",
+    "isItYours": {
+      "found": "Is this yours?",
+      "lost": "Have you found this?"
+    },
+    "isItYoursBody": {
+      "found": "Report it as lost with a photo of it. If it's the same item, Eureka will match you with the finder.",
+      "lost": "Report it as found with a photo. If it's the same item, Eureka will match you with the owner."
+    }
+  },
+  "match": {
+    "kicker": "Possible match",
+    "title": "Is this the same item?",
+    "lead": "Compare the photos and the details. Only you can be sure.",
+    "why": "Why Eureka thinks so",
+    "noReasons": "The photos and details are very similar.",
+    "differences": "What looks different",
+    "nextTitle": "What's next",
+    "nextBody": "If it's yours, confirm. When you both confirm, you'll see each other's contact details.",
+    "waitingForThem": "You confirmed. Waiting for the other person to confirm too.",
+    "theyConfirmed": "The other person already confirmed. Confirm too if it's the same item.",
+    "confirm": "Yes, it's the same item",
+    "reject": "Not the same item",
+    "rejectTitle": "Not the same item?",
+    "rejectBody": "The match and its chat are removed. Eureka keeps looking for other matches.",
+    "doneTitle": "Matched",
+    "doneBody": "You both confirmed. Contact {{name}} to arrange the handover.",
+    "openChat": "Message {{name}}",
+    "confirmedToast": "Confirmed. We'll let you know when they confirm too.",
+    "bothConfirmedToast": "You both confirmed. Arrange the handover in the chat.",
+    "rejectedToast": "Match removed",
+    "actionFailed": "That didn't work. Try again.",
+    "state": {
+      "new": "New match",
+      "waiting": "You confirmed, waiting for them",
+      "theyConfirmed": "They confirmed, waiting for you",
+      "confirmed": "Both confirmed"
+    }
   }
 }

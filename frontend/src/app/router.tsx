@@ -9,6 +9,8 @@ import { RegisterPage } from "@/features/auth/RegisterPage";
 import { BrowsePage } from "@/features/items/BrowsePage";
 import { MyItemsPage } from "@/features/items/MyItemsPage";
 import { ReportPage } from "@/features/report/ReportPage";
+import { ItemDetailPage } from "@/features/items/ItemDetailPage";
+import { MatchPage } from "@/features/matches/MatchPage";
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +26,8 @@ export const router = createBrowserRouter([
           { path: "/items", element: <BrowsePage /> },
           { path: "/items/mine", element: <MyItemsPage /> },
           { path: "/report/:type", element: <ReportPage /> },
+          { path: "/items/:id", element: <ItemDetailPage /> },
+          { path: "/matches/:id", element: <MatchPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },
