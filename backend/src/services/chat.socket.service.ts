@@ -4,6 +4,9 @@ import chatModel, { IChatMessage } from "../models/chat_model";
 import matchModel from "../models/match_model";
 import { socketAuth } from "../sockets/socket-auth";
 import { logger } from "../lib/logger";
+import { botReplyFor } from "../demo/bots";
+
+const BOT_TYPING_DELAY_MS = 1500;
 
 const MAX_MESSAGE_LENGTH = 2000;
 
@@ -92,6 +95,13 @@ export const initChatSocket = (io: Server) => {
           status: "sent",
         });
         chatNamespace.to(message.matchId).emit("new_message", message);
+
+        // Demo: a seed bot answers the visitor's first message, after a short "typing" pause.
+        setTimeout(() => {
+          botReplyFor(message.matchId, userId, message.receiverId)
+            .then((reply) => reply && chatNamespace.to(reply.matchId).emit("new_message", reply))
+            .catch((err) => logger.warn({ err }, "Demo bot reply failed"));
+        }, BOT_TYPING_DELAY_MS).unref();
       } catch (err) {
         logger.error({ err, userId }, "Failed to send message");
         socket.emit("error", { message: "Failed to send message" });

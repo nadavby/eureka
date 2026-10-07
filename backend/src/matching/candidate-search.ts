@@ -42,7 +42,7 @@ export class AtlasCandidateSearch implements CandidateSearch {
   ) {}
 
   async find(query: SearchQuery, limit: number): Promise<Candidate[]> {
-    const filters: Record<string, unknown>[] = [{ itemType: opposite(query.itemType) }, { isResolved: false }];
+    const filters: Record<string, unknown>[] = [{ itemType: opposite(query.itemType) }, { isResolved: false }, { sandbox: false }];
     if (query.category) filters.push({ category: query.category });
 
     const rows = await this.model.aggregate([
@@ -77,6 +77,7 @@ export class InMemoryCandidateSearch implements CandidateSearch {
     const filter: Record<string, unknown> = {
       itemType: opposite(query.itemType),
       isResolved: false,
+      sandbox: { $ne: true },
       _id: { $ne: query._id },
       "embedding.0": { $exists: true },
     };

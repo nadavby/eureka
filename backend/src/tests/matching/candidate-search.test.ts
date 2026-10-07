@@ -78,7 +78,7 @@ describe("AtlasCandidateSearch", () => {
       queryVector: [0.1, 0.2],
       numCandidates: 600,
       limit: 31,
-      filter: { $and: [{ itemType: "lost" }, { isResolved: false }, { category: "Wallet" }] },
+      filter: { $and: [{ itemType: "lost" }, { isResolved: false }, { sandbox: false }, { category: "Wallet" }] },
     });
     expect(project.$project.similarity).toEqual({ $meta: "vectorSearchScore" });
     expect(project.$project.embedding).toBe(0);

@@ -185,6 +185,23 @@ router.post("/google", authLimiter, validate({ body: googleBody }), asyncHandler
  *       400:
  *         description: Invalid credentials
  */
+/**
+ * @swagger
+ * /auth/demo:
+ *   post:
+ *     summary: Start a demo session
+ *     description: Creates a private, temporary visitor account with a ready scenario (a lost item, an AI match with a found item and a waiting chat message) and signs it in. Visitor sandboxes are invisible to everyone else and are removed after 24 hours.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: "{ accessToken, refreshToken, _id, matchId }"
+ *       429:
+ *         description: Too many requests
+ *       503:
+ *         description: DEMO_UNAVAILABLE (not seeded yet) or DEMO_BUSY (visitor cap reached)
+ */
+router.post("/demo", authLimiter, asyncHandler(authController.demoSignIn));
+
 router.post("/login", authLimiter, validate({ body: loginBody }), asyncHandler(authController.login));
 
 /**

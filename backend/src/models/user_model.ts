@@ -8,6 +8,9 @@ export interface iUser {
   imgURL?: string;
   userName: string;
   phoneNumber: string;
+  /** Demo accounts: "seed" bots own the public demo items, "visitor" accounts are created by Try the demo. */
+  demoRole?: "seed" | "visitor";
+  createdAt?: Date;
 }
 
 const userSchema = new mongoose.Schema<iUser>({
@@ -35,7 +38,8 @@ const userSchema = new mongoose.Schema<iUser>({
     type: String,
     required: true,
   },
-});
+  demoRole: { type: String, enum: ["seed", "visitor"], index: true },
+}, { timestamps: true });
 
 // Never serialize credentials, whatever route returns a user document.
 userSchema.set("toJSON", {
