@@ -11,6 +11,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // never auto-open a browser (on Windows this shells out to Start-Process)
+    open: false,
   },
   test: {
     environment: "jsdom",

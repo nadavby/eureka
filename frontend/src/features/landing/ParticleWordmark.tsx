@@ -41,7 +41,8 @@ const drawWordmark = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
 
 /**
  * The EUREKA wordmark made of particles that scatter away from the pointer and drift back,
- * like loose tags settling into place. Static wordmark when the user prefers reduced motion.
+ * like loose tags settling into place. With prefers-reduced-motion the particles stay still
+ * (no ambient drift or twinkle) but still react to the pointer, which is motion the user starts.
  */
 export const ParticleWordmark = ({ className }: { className?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,12 +112,6 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
       }
     };
 
-    const drawStatic = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = cssColor("--primary", "#2563eb");
-      drawWordmark(ctx, width, height);
-    };
-
     const tick = () => {
       if (!running) return;
       const settled = cssColor("--primary", "#2563eb");
@@ -127,8 +122,11 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        p.x += Math.sin(time + p.baseX * 0.008) * 0.2 + p.vx;
-        p.y += Math.cos(time + p.baseY * 0.008) * 0.2 + p.vy;
+        // Ambient drift is automatic motion: skipped when the user asks for reduced motion.
+        if (!reducedMotion) {
+          p.x += Math.sin(time + p.baseX * 0.008) * 0.2 + p.vx;
+          p.y += Math.cos(time + p.baseY * 0.008) * 0.2 + p.vy;
+        }
 
         const dx = pointer.x - p.x;
         const dy = pointer.y - p.y;
@@ -146,7 +144,7 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
         }
         ctx.fillRect(p.x, p.y, p.size, p.size);
 
-        if (--p.life <= 0) {
+        if (!reducedMotion && --p.life <= 0) {
           const fresh = sample();
           if (fresh) particles[i] = fresh;
         }
@@ -155,7 +153,7 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
     };
 
     const start = () => {
-      if (running || reducedMotion || !visible || document.hidden) return;
+      if (running || !visible || document.hidden) return;
       running = true;
       frame = requestAnimationFrame(tick);
     };
@@ -165,13 +163,9 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
     };
 
     setup();
-    if (reducedMotion) drawStatic();
-    else start();
+    start();
 
-    const resize = new ResizeObserver(() => {
-      setup();
-      if (reducedMotion) drawStatic();
-    });
+    const resize = new ResizeObserver(() => setup());
     resize.observe(canvas);
 
     // Pause when scrolled away or the tab is in the background.
@@ -198,15 +192,11 @@ export const ParticleWordmark = ({ className }: { className?: string }) => {
     canvas.addEventListener("pointerleave", onLeave);
     canvas.addEventListener("pointerup", (e) => e.pointerType !== "mouse" && onLeave());
 
-    // Theme changes swap the colors; the static version must be redrawn.
-    const themeObserver = new MutationObserver(() => reducedMotion && drawStatic());
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
     return () => {
       stop();
       resize.disconnect();
       io.disconnect();
-      themeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerdown", onMove);
