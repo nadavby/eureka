@@ -4,6 +4,8 @@ import axios, { CanceledError } from "axios";
 export { CanceledError };
 import { API_URL } from "../config";
 
+const CREDENTIAL_ENDPOINTS = /^\/auth\/(login|register|google|refresh|logout)$/;
+
 export const apiClient = axios.create({
   baseURL: API_URL,
   withCredentials: true
@@ -28,7 +30,8 @@ apiClient.interceptors.response.use(
     
     if (error.response?.status === 401 && 
         !originalRequest._retry && 
-        !originalRequest.url?.includes('/auth/refresh')) {
+        // credential endpoints answer 401 for bad credentials; refreshing would not help
+        !CREDENTIAL_ENDPOINTS.test(originalRequest.url ?? '')) {
       
       originalRequest._retry = true;
       
