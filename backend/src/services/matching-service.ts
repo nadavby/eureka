@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger';
 import { IItem } from '../models/item_model';
 import { AIMatchingService } from './ai-matching-service';
 
@@ -54,7 +55,7 @@ export const shouldSkipComparison = (lostItem: IItem, foundItem: IItem): boolean
     try {
       return await AIMatchingService(targetItem, potentialMatches);
     } catch (error) {
-     console.log(error);
+     logger.error({ err: error }, "Matching failed");
      return [];
     }
   }

@@ -17,8 +17,6 @@ export interface IItem {
   condition?: 'new' | 'worn' | 'damaged' | 'other';
   flaws?: string;
   material?: string;
-  ownerName?: string;
-  ownerEmail?: string;
   visionApiData?: {
     labels?: string[];
     objects?: Array<{
@@ -148,6 +146,14 @@ const itemSchema = new mongoose.Schema<IItem>(
   },
   { timestamps: true }
 );
+
+// Hide Mongoose internals from API responses.
+itemSchema.set("toJSON", {
+  transform: (_doc, ret: Record<string, unknown>) => {
+    delete ret.__v;
+    return ret;
+  },
+});
 
 const itemModel = mongoose.model<IItem>("items", itemSchema);
 

@@ -44,13 +44,13 @@ type TestUser = {
 const owner: TestUser = {
   email: "owner@match.test",
   userName: "matchOwner",
-  password: "123456",
+  password: "password123",
   phoneNumber: "+972500000001",
 };
 const finder: TestUser = {
   email: "finder@match.test",
   userName: "matchFinder",
-  password: "123456",
+  password: "password123",
   phoneNumber: "+972500000002",
 };
 
@@ -209,10 +209,10 @@ describe("Notification API Tests", () => {
     expect(res.statusCode).toBe(401);
   });
 
-  test("Get notifications without userId returns 400", async () => {
-    const res = await request(app).get("/notification").set(auth(owner));
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBe("User ID is required");
+  test("Get notifications ignores a userId in the query", async () => {
+    const res = await request(app).get(`/notification?userId=${finder._id}`).set(auth(owner));
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data.every((n: { userId: string }) => n.userId === owner._id)).toBe(true);
   });
 
   test("Get notifications of a user", async () => {
@@ -266,12 +266,10 @@ describe("Notification API Tests", () => {
     expect(unread).toBe(0);
   });
 
-  test("Mark all as read without userId returns 400", async () => {
-    const res = await request(app)
-      .put("/notification/read-all")
-      .set(auth(finder))
-      .send({});
-    expect(res.statusCode).toBe(400);
+  test("Mark all as read only touches my notifications", async () => {
+    const res = await request(app).put("/notification/read-all").set(auth(finder)).send({ userId: owner._id });
+    expect(res.statusCode).toBe(200);
+    expect(res.body.modifiedCount).toBe(0);
   });
 
   test("Delete notification", async () => {
@@ -295,19 +293,16 @@ describe("Match confirmation", () => {
     expect(res.statusCode).toBe(401);
   });
 
-  test("Confirm without required fields returns 400", async () => {
-    const res = await request(app)
-      .post("/match/confirm")
-      .set(auth(owner))
-      .send({ matchId });
+  test("Confirm without a matchId returns 400", async () => {
+    const res = await request(app).post("/match/confirm").set(auth(owner)).send({});
     expect(res.statusCode).toBe(400);
   });
 
   test("Confirm by a user not part of the match returns 403", async () => {
-    const res = await request(app)
-      .post("/match/confirm")
-      .set(auth(owner))
-      .send({ matchId, userId: new mongoose.Types.ObjectId().toString() });
+    const stranger = { ...owner, email: "stranger@match.test", userName: "matchStranger" };
+    await registerAndLogin(stranger);
+    // the body names the owner, but identity comes from the stranger's token
+    const res = await request(app).post("/match/confirm").set(auth(stranger)).send({ matchId, userId: owner._id });
     expect(res.statusCode).toBe(403);
   });
 

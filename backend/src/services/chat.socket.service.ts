@@ -1,5 +1,11 @@
-import { Server, Socket } from 'socket.io';
-import chatModel, { IChatMessage } from '../models/chat_model';
+import mongoose from "mongoose";
+import { Server, Socket } from "socket.io";
+import chatModel, { IChatMessage } from "../models/chat_model";
+import matchModel from "../models/match_model";
+import { socketAuth } from "../sockets/socket-auth";
+import { logger } from "../lib/logger";
+
+const MAX_MESSAGE_LENGTH = 2000;
 
 interface UserChatInfo {
   matchId: string;
@@ -15,190 +21,155 @@ interface ChatAggregation {
   unreadCount: number;
 }
 
+/** Returns the match if `userId` takes part in it, otherwise null. */
+const participantMatch = async (matchId: unknown, userId: string) => {
+  if (typeof matchId !== "string" || !mongoose.isValidObjectId(matchId)) return null;
+  const match = await matchModel.findById(matchId).lean();
+  return match && (match.userId1 === userId || match.userId2 === userId) ? match : null;
+};
+
+const NOT_PARTICIPANT = { message: "You are not part of this match" };
+
 export const initChatSocket = (io: Server) => {
-  // Create a namespace for chat
-  const chatNamespace = io.of('/chat');
-  
-  // Track active users and their sockets
+  const chatNamespace = io.of("/chat");
+  chatNamespace.use(socketAuth);
+
+  // userId -> ids of that user's open sockets
   const userSockets = new Map<string, Set<string>>();
+  const broadcastUserStatus = (userId: string, isOnline: boolean) =>
+    chatNamespace.emit("user_status_changed", { userId, isOnline });
 
-  // Helper function to broadcast user status
-  const broadcastUserStatus = (userId: string, isOnline: boolean) => {
-    chatNamespace.emit('user_status_changed', { userId, isOnline });
-  };
+  chatNamespace.on("connection", (socket: Socket) => {
+    const userId: string = socket.data.userId;
 
-  chatNamespace.on('connection', (socket: Socket) => {
-    console.log('[CHAT SOCKET] New connection:', socket.id);
+    if (!userSockets.has(userId)) {
+      userSockets.set(userId, new Set());
+      broadcastUserStatus(userId, true);
+    }
+    userSockets.get(userId)!.add(socket.id);
+    logger.debug({ userId, socketId: socket.id }, "Chat socket connected");
 
-    // Track user's active sockets
-    socket.on('register_user', (userId: string) => {
-      if (!userSockets.has(userId)) {
-        userSockets.set(userId, new Set());
-        // Broadcast that user is online when their first socket connects
-        broadcastUserStatus(userId, true);
+    // Kept for older clients: identity already comes from the token.
+    socket.on("register_user", () => {
+      socket.emit("online_users", Array.from(userSockets.keys()));
+    });
+    socket.emit("online_users", Array.from(userSockets.keys()));
+
+    socket.on("join_chat", async (matchId: unknown) => {
+      try {
+        if (!(await participantMatch(matchId, userId))) return socket.emit("error", NOT_PARTICIPANT);
+        const room = matchId as string;
+        socket.join(room);
+
+        const messages = await chatModel.find({ matchId: room }).sort({ timestamp: 1 }).limit(100).lean();
+        socket.emit("chat_history", messages);
+
+        await chatModel.updateMany(
+          { matchId: room, receiverId: userId, status: "sent" },
+          { status: "delivered" }
+        );
+      } catch (err) {
+        logger.error({ err, userId }, "Failed to join chat");
+        socket.emit("error", { message: "Failed to load chat history" });
       }
-      userSockets.get(userId)?.add(socket.id);
-      
-      socket.data.userId = userId;
-
-      // Send current online users to the newly connected user
-      const onlineUsers = Array.from(userSockets.keys());
-      socket.emit('online_users', onlineUsers);
-      
-      console.log(`[CHAT SOCKET] User ${userId} registered with socket ${socket.id}`);
     });
 
-    // Join a chat room based on matchId
-    socket.on('join_chat', async (matchId: string) => {
-      socket.join(matchId);
-      console.log(`[CHAT SOCKET] Client ${socket.id} joined chat room: ${matchId}`);
-
-      // Load and send chat history
+    socket.on("send_message", async (data: { matchId?: unknown; content?: unknown }) => {
       try {
-        const messages = await chatModel.find({ matchId })
-          .sort({ timestamp: 1 })
-          .limit(100)
-          .lean();
-        socket.emit('chat_history', messages);
+        const match = socket.rooms.has(data?.matchId as string) ? await participantMatch(data.matchId, userId) : null;
+        if (!match) return socket.emit("error", NOT_PARTICIPANT);
 
-        // Mark messages as delivered for this user
-        if (socket.data.userId) {
-          await chatModel.updateMany(
-            { 
-              matchId,
-              senderId: { $ne: socket.data.userId },
-              status: { $in: ['sent', 'delivered'] }
-            },
-            { status: 'delivered' }
-          );
+        const content = typeof data.content === "string" ? data.content.trim() : "";
+        if (!content || content.length > MAX_MESSAGE_LENGTH) {
+          return socket.emit("error", { message: `A message must be 1-${MAX_MESSAGE_LENGTH} characters` });
         }
-      } catch (error) {
-        console.error('[CHAT SOCKET] Error loading chat history:', error);
-        socket.emit('error', { message: 'Failed to load chat history' });
-      }
-    });
 
-    // Handle new messages
-    socket.on('send_message', async (data: {
-      matchId: string;
-      senderId: string;
-      receiverId: string;
-      content: string;
-    }) => {
-      try {
-        // Create and save the message
-        const message = new chatModel({
-          matchId: data.matchId,
-          senderId: data.senderId,
-          receiverId: data.receiverId,
-          content: data.content,
-          status: 'sent'
+        const message = await chatModel.create({
+          matchId: data.matchId as string,
+          senderId: userId,
+          receiverId: match.userId1 === userId ? match.userId2 : match.userId1,
+          content,
+          status: "sent",
         });
-        await message.save();
-
-        // Broadcast to all clients in the room
-        chatNamespace.to(data.matchId).emit('new_message', message);
-      } catch (error) {
-        console.error('[CHAT SOCKET] Error saving message:', error);
-        socket.emit('error', { message: 'Failed to send message' });
+        chatNamespace.to(message.matchId).emit("new_message", message);
+      } catch (err) {
+        logger.error({ err, userId }, "Failed to send message");
+        socket.emit("error", { message: "Failed to send message" });
       }
     });
 
-    // Handle message status updates
-    socket.on('update_message_status', async (data: {
-      messageId: string;
-      status: 'delivered' | 'read';
-    }) => {
+    // Only the receiver of a message can mark it delivered or read.
+    socket.on("update_message_status", async (data: { messageId?: unknown; status?: unknown }) => {
       try {
-        const message = await chatModel.findByIdAndUpdate(
-          data.messageId,
+        if (!mongoose.isValidObjectId(data?.messageId)) return;
+        if (data.status !== "delivered" && data.status !== "read") return;
+        const message = await chatModel.findOneAndUpdate(
+          { _id: data.messageId, receiverId: userId },
           { status: data.status },
           { new: true }
         );
         if (message) {
-          chatNamespace.to(message.matchId).emit('message_status_updated', {
-            messageId: message._id,
-            status: data.status
-          });
+          chatNamespace.to(message.matchId).emit("message_status_updated", { messageId: message._id, status: data.status });
         }
-      } catch (error) {
-        console.error('[CHAT SOCKET] Error updating message status:', error);
+      } catch (err) {
+        logger.error({ err, userId }, "Failed to update message status");
       }
     });
 
-    // Get user's chats
-    socket.on('get_user_chats', async (userId: string) => {
+    socket.on("get_user_chats", async () => {
       try {
-        // Find all matches where the user has messages, including resolved items
-        const userChats = await chatModel.aggregate([
-          { 
-            $match: { 
-              $or: [{ senderId: userId }, { receiverId: userId }],
-            }
-          },
+        const userChats: ChatAggregation[] = await chatModel.aggregate([
+          { $match: { $or: [{ senderId: userId }, { receiverId: userId }] } },
           { $sort: { timestamp: -1 } },
           {
             $group: {
-              _id: '$matchId',
-              lastMessage: { $first: '$$ROOT' },
+              _id: "$matchId",
+              lastMessage: { $first: "$$ROOT" },
               unreadCount: {
                 $sum: {
                   $cond: [
-                    { 
-                      $and: [
-                        { $ne: ['$senderId', userId] },
-                        { $in: ['$status', ['sent', 'delivered']] }
-                      ]
-                    },
+                    { $and: [{ $ne: ["$senderId", userId] }, { $in: ["$status", ["sent", "delivered"]] }] },
                     1,
-                    0
-                  ]
-                }
-              }
-            }
-          }
+                    0,
+                  ],
+                },
+              },
+            },
+          },
         ]);
 
-        const chatInfos: UserChatInfo[] = userChats.map((chat: ChatAggregation) => ({
-          matchId: chat._id,
-          otherUserId: chat.lastMessage.senderId === userId 
-            ? chat.lastMessage.receiverId 
-            : chat.lastMessage.senderId,
-          lastMessage: chat.lastMessage,
-          unreadCount: chat.unreadCount,
-          isOnline: userSockets.has(chat.lastMessage.senderId === userId 
-            ? chat.lastMessage.receiverId 
-            : chat.lastMessage.senderId)
-        }));
-
-        socket.emit('user_chats', chatInfos);
-      } catch (error) {
-        console.error('[CHAT SOCKET] Error getting user chats:', error);
-        socket.emit('error', { message: 'Failed to load chats' });
+        const chats: UserChatInfo[] = userChats.map((chat) => {
+          const otherUserId =
+            chat.lastMessage.senderId === userId ? chat.lastMessage.receiverId : chat.lastMessage.senderId;
+          return {
+            matchId: chat._id,
+            otherUserId,
+            lastMessage: chat.lastMessage,
+            unreadCount: chat.unreadCount,
+            isOnline: userSockets.has(otherUserId),
+          };
+        });
+        socket.emit("user_chats", chats);
+      } catch (err) {
+        logger.error({ err, userId }, "Failed to load chats");
+        socket.emit("error", { message: "Failed to load chats" });
       }
     });
 
-    // Leave chat room
-    socket.on('leave_chat', (matchId: string) => {
-      socket.leave(matchId);
-      console.log(`[CHAT SOCKET] Client ${socket.id} left chat room: ${matchId}`);
+    socket.on("leave_chat", (matchId: unknown) => {
+      if (typeof matchId === "string") socket.leave(matchId);
     });
 
-    socket.on('disconnect', () => {
-      // Remove socket from user's active sockets
-      if (socket.data.userId) {
-        const userSocketSet = userSockets.get(socket.data.userId);
-        userSocketSet?.delete(socket.id);
-        
-        // If this was the user's last socket, broadcast offline status
-        if (userSocketSet?.size === 0) {
-          userSockets.delete(socket.data.userId);
-          broadcastUserStatus(socket.data.userId, false);
-        }
+    socket.on("disconnect", () => {
+      const sockets = userSockets.get(userId);
+      sockets?.delete(socket.id);
+      if (sockets?.size === 0) {
+        userSockets.delete(userId);
+        broadcastUserStatus(userId, false);
       }
-      console.log('[CHAT SOCKET] Disconnected:', socket.id);
+      logger.debug({ userId, socketId: socket.id }, "Chat socket disconnected");
     });
   });
 
   return chatNamespace;
-}; 
+};

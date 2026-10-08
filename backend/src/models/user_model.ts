@@ -37,6 +37,16 @@ const userSchema = new mongoose.Schema<iUser>({
   },
 });
 
+// Never serialize credentials, whatever route returns a user document.
+userSchema.set("toJSON", {
+  transform: (_doc, ret: Record<string, unknown>) => {
+    delete ret.password;
+    delete ret.refreshToken;
+    delete ret.__v;
+    return ret;
+  },
+});
+
 const userModel = mongoose.model<iUser>("users", userSchema);
 
 export default userModel;

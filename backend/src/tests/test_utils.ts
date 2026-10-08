@@ -33,6 +33,7 @@ export type ItemFields = {
   condition?: string;
   material?: string;
   brand?: string;
+  userId?: string;
 };
 
 // Builds a complete, valid item payload (all fields required by item_model).

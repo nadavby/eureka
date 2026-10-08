@@ -95,13 +95,13 @@ describe("Item API Tests", () => {
     // unread file stream could make the client see ECONNRESET instead of the 401.
     const res = await postItem(app, undefined, itemFields({ category }), false);
     expect(res.statusCode).toBe(401);
-    expect(res.text).toBe("Unauthorized - Missing authorization header");
+    expect(res.body.error).toBe("UNAUTHORIZED");
   });
 
   test("Create item without image fails", async () => {
     const res = await postItem(app, accessToken, itemFields({ category }), false);
     expect(res.statusCode).toBe(400);
-    expect(res.text).toContain("Missing required file");
+    expect(res.body.message).toContain("Missing image");
   });
 
   test("Create item without itemType fails", async () => {
@@ -111,7 +111,7 @@ describe("Item API Tests", () => {
       itemFields({ category, itemType: undefined })
     );
     expect(res.statusCode).toBe(400);
-    expect(res.text).toBe("Missing required field: itemType");
+    expect(res.body.error).toBe("VALIDATION_ERROR");
   });
 
   test("Create item with invalid itemType fails", async () => {
@@ -121,7 +121,7 @@ describe("Item API Tests", () => {
       itemFields({ category, itemType: "stolen" })
     );
     expect(res.statusCode).toBe(400);
-    expect(res.text).toBe("Item type must be 'lost' or 'found'");
+    expect(res.body.error).toBe("VALIDATION_ERROR");
   });
 
   test("Should create a lost item", async () => {
@@ -135,11 +135,11 @@ describe("Item API Tests", () => {
     expect(res.body.itemType).toBe("lost");
     expect(res.body.description).toBe("Test lost item");
     expect(res.body.userId).toBe(userId);
-    expect(res.body.ownerName).toBe("itemTestUser");
-    expect(res.body.ownerEmail).toBe(testEmail);
+    expect(res.body.ownerName).toBeUndefined();
+    expect(res.body.ownerEmail).toBeUndefined();
     expect(res.body.isResolved).toBe(false);
     expect(res.body.location).toEqual({ lat: 32.0853, lng: 34.7818 });
-    expect(res.body.imageUrl).toMatch(/\/public\/items\/\d+\.png$/);
+    expect(res.body.imageUrl).toMatch(/\/public\/items\/\d+-[0-9a-f-]+\.png$/);
     expect(res.body.visionApiData.labels).toEqual(["Wallet", "Leather"]);
     expect(mockedVision).toHaveBeenCalledWith(res.body.imageUrl);
 
@@ -229,7 +229,7 @@ describe("Item API Tests", () => {
       `/items/${new mongoose.Types.ObjectId()}`
     );
     expect(res.statusCode).toBe(404);
-    expect(res.text).toBe("Item not found");
+    expect(res.body.message).toBe("Item not found");
   });
 
   test("Delete item requires authentication", async () => {
@@ -242,7 +242,7 @@ describe("Item API Tests", () => {
       .delete(`/items/${new mongoose.Types.ObjectId()}`)
       .set("Authorization", "Bearer " + accessToken);
     expect(res.statusCode).toBe(404);
-    expect(res.text).toBe("Item not found");
+    expect(res.body.message).toBe("Item not found");
   });
 
   test("Should delete an item", async () => {
@@ -250,7 +250,7 @@ describe("Item API Tests", () => {
       .delete(`/items/${foundItemId}`)
       .set("Authorization", "Bearer " + accessToken);
     expect(res.statusCode).toBe(200);
-    expect(res.text).toBe("Item deleted successfully");
+    expect(res.body.message).toBe("Item deleted successfully");
 
     const getRes = await request(app).get(`/items/${foundItemId}`);
     expect(getRes.statusCode).toBe(404);

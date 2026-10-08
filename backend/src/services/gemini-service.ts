@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI, GenerativeModel, Part } from "@google/generative-ai";
+import { config } from "../lib/config";
+import { logger } from "../lib/logger";
 import { IItem } from "../models/item_model";
 
 type IItemWithTimestamps = IItem & {
@@ -74,18 +76,15 @@ interface MatchEvaluationRequest {
 }
 
 class GeminiService {
-  private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
-  
+  private model?: GenerativeModel;
+
+  // Without a key the app still runs; matching is skipped instead of crashing at startup.
   constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
+    if (!config.GEMINI_API_KEY) {
+      logger.warn("GEMINI_API_KEY is not set: AI matching is disabled");
+      return;
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash"  // Using flash model for better quota limits
-    });
+    this.model = new GoogleGenerativeAI(config.GEMINI_API_KEY).getGenerativeModel({ model: "gemini-1.5-flash" });
   }
   
   private extractVisionSummary(visionApiData: VisionApiData | undefined): VisionSummary {
@@ -100,7 +99,7 @@ class GeminiService {
         logos: Array.isArray(visionApiData?.logos) ? visionApiData.logos.map((logo: VisionLogoData) => logo?.description || '').filter(Boolean) : [],
       };
     } catch (error) {
-      console.error('Error extracting vision summary:', error);
+      logger.warn({ err: error }, 'Failed to extract vision summary');
       return {
         labels: [],
         objects: [],
@@ -187,6 +186,7 @@ Analyze the items and return ONLY a JSON response in the format:
         } as Part
       ];
 
+      if (!this.model) return { confidenceScore: 0, reasoning: "AI matching is disabled" };
       const result = await this.model.generateContent(parts);
       const responseText = result.response.text().trim();
       
@@ -198,26 +198,25 @@ Analyze the items and return ONLY a JSON response in the format:
         const parsedResponse = JSON.parse(cleanedResponse);
         
         if (typeof parsedResponse.confidenceScore !== 'number' || typeof parsedResponse.reasoning !== 'string') {
-          console.error("Invalid response structure from Gemini:", parsedResponse);
+          logger.warn("Gemini returned an unexpected response structure");
           return { confidenceScore: 0, reasoning: "" };
         }
         
         const confidenceScore = Math.min(100, Math.max(0, parsedResponse.confidenceScore));
         return { confidenceScore, reasoning: parsedResponse.reasoning };
       } catch (error) {
-        console.error("Error parsing Gemini response:", error);
-        console.error("Raw response:", responseText);
+        logger.warn({ err: error, responseLength: responseText.length }, "Failed to parse Gemini response");
         return { confidenceScore: 0, reasoning: "" };
       }
     } catch (error) {
       if ((error as { status?: number }).status === 429) {
-        console.error("Rate limit exceeded. Please try again in a few seconds.");
+        logger.warn("Gemini rate limit exceeded");
         return { 
           confidenceScore: 0, 
           reasoning: "Rate limit exceeded. Please try again in a few seconds." 
         };
       }
-      console.error("Error in evaluateMatch:", error);
+      logger.error({ err: error }, "Gemini evaluateMatch failed");
       return { confidenceScore: 0, reasoning: "" };
     }
   }

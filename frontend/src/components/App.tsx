@@ -3,7 +3,7 @@
 import { FC } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Login } from "./Login";
-import { RegistrationForm } from "./RegristrationForm";
+import { RegistrationForm } from "./RegistrationForm";
 import UserProfile from "./UserProfile";
 import { useAuth } from "../hooks/useAuth";
 import LostItems from "./LostItems";

@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 import { Express } from "express";
 import initApp from "../server";
+import { testImagePath } from "./test_utils";
+
 let app: Express;
 const uploadedFiles: string[] = [];
 
@@ -19,22 +21,26 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
-describe("File Tests", () => {
-  test("upload file", async () => {
-    const filePath = `${__dirname}/test_file.txt`;
-
-    const response = await request(app)
-      .post("/file")
-      .attach("file", filePath);
-    expect(response.statusCode).toEqual(200);
-    let url: string = response.body.url;
-    // On Windows multer returns a backslash path; normalize it for the request
-    url = url.replace(/^.*\/\/[^/]+/, "").replace(/\\/g, "/");
-    expect(url).toMatch(/^\/public\/users\/\d+\.txt$/);
+describe("profile picture upload", () => {
+  it("stores an image and serves it back", async () => {
+    const res = await request(app).post("/file").attach("file", testImagePath);
+    expect(res.status).toBe(200);
+    const url = (res.body.url as string).replace(/^.*\/\/[^/]+/, "");
+    expect(url).toMatch(/^\/public\/users\/\d+-[0-9a-f-]+\.png$/);
     uploadedFiles.push(path.join(process.cwd(), url));
 
-    const res = await request(app).get(url);
-    expect(res.statusCode).toEqual(200);
-    expect(res.text).toBe(fs.readFileSync(filePath, "utf8"));
+    const served = await request(app).get(url);
+    expect(served.status).toBe(200);
+    expect(served.body).toEqual(fs.readFileSync(testImagePath));
+  });
+
+  it("rejects non-image files", async () => {
+    const res = await request(app).post("/file").attach("file", path.join(__dirname, "test_file.txt"));
+    expect(res.status).toBe(400);
+  });
+
+  it("requires a file", async () => {
+    const res = await request(app).post("/file");
+    expect(res.status).toBe(400);
   });
 });
