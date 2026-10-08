@@ -6,4 +6,3 @@ process.env.REFRESH_TOKEN_EXPIRATION ??= "7d";
 process.env.DOMAIN_BASE ??= "http://localhost:3000";
 // Dummy keys: tests mock the Google AI services
 process.env.GEMINI_API_KEY ??= "test-dummy";
-process.env.GOOGLE_CLOUD_VISION_API_KEY ??= "test-dummy";

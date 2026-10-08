@@ -23,6 +23,14 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     });
     return;
   }
+  if (err instanceof mongoose.Error.ValidationError) {
+    res.status(400).json({
+      error: "VALIDATION_ERROR",
+      message: "Invalid request",
+      details: Object.values(err.errors).map((e) => ({ path: [e.path], message: e.message })),
+    });
+    return;
+  }
   if (err instanceof mongoose.Error.CastError) {
     res.status(400).json({ error: "BAD_REQUEST", message: `Invalid ${err.path}` });
     return;

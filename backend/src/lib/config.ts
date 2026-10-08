@@ -13,14 +13,29 @@ const schema = z.object({
   REFRESH_TOKEN_EXPIRATION: z.string().default("7d"),
   CLIENT_URL: z.string().default("http://localhost:5173"),
   GEMINI_API_KEY: z.string().default(""),
-  GOOGLE_CLOUD_VISION_API_KEY: z.string().default(""),
+  /** Offline deterministic AI for development and E2E tests (never in production). */
+  AI_FAKE: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
+  GEMINI_MODEL_FAST: z.string().default("gemini-3.5-flash-lite"),
+  GEMINI_MODEL_SMART: z.string().default("gemini-3.8-flash"),
+  GEMINI_EMBED_MODEL: z.string().default("gemini-embedding-2"),
+  EMBEDDING_DIMENSIONS: z.coerce.number().int().min(128).max(3072).default(768),
+  AI_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().default(12),
+  VECTOR_SEARCH: z.enum(["memory", "atlas"]).optional(),
+  MATCH_RADIUS_KM: z.coerce.number().positive().default(10),
+  MATCH_THRESHOLD: z.coerce.number().min(0).max(100).default(70),
   GOOGLE_CLIENT_ID: z.string().default(""),
+  CLOUDINARY_URL: z.string().startsWith("cloudinary://").optional(),
+  IMAGE_STORAGE: z.enum(["local", "cloudinary"]).optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
   SSL_KEY_PATH: z.string().optional(),
   SSL_CERT_PATH: z.string().optional(),
 });
 
-export type Config = z.infer<typeof schema> & { CLIENT_URLS: string[] };
+export type Config = Omit<z.infer<typeof schema>, "VECTOR_SEARCH" | "IMAGE_STORAGE"> & {
+  CLIENT_URLS: string[];
+  VECTOR_SEARCH: "memory" | "atlas";
+  IMAGE_STORAGE: "local" | "cloudinary";
+};
 
 export const parseConfig = (env: Record<string, string | undefined>): Config => {
   const result = schema.safeParse(env);
@@ -29,7 +44,16 @@ export const parseConfig = (env: Record<string, string | undefined>): Config => 
     throw new Error(`Invalid environment configuration: ${issues}`);
   }
   const CLIENT_URLS = result.data.CLIENT_URL.split(",").map((s) => s.trim()).filter(Boolean);
-  return { ...result.data, CLIENT_URLS };
+  // Atlas Vector Search only exists on Atlas; everything else (tests, local Mongo) uses the in-memory search.
+  const VECTOR_SEARCH = result.data.VECTOR_SEARCH ?? (result.data.NODE_ENV === "production" ? "atlas" : "memory");
+  const IMAGE_STORAGE = result.data.IMAGE_STORAGE ?? (result.data.CLOUDINARY_URL ? "cloudinary" : "local");
+  if (IMAGE_STORAGE === "cloudinary" && !result.data.CLOUDINARY_URL) {
+    throw new Error("Invalid environment configuration: CLOUDINARY_URL is required when IMAGE_STORAGE=cloudinary");
+  }
+  if (result.data.AI_FAKE && result.data.NODE_ENV === "production") {
+    throw new Error("Invalid environment configuration: AI_FAKE must not be enabled in production");
+  }
+  return { ...result.data, CLIENT_URLS, VECTOR_SEARCH, IMAGE_STORAGE };
 };
 
 export const config = parseConfig(process.env);

@@ -23,3 +23,25 @@ describe("parseConfig", () => {
     expect(() => parseConfig({ ...base, TOKEN_SECRET: "short" })).toThrow(/TOKEN_SECRET/);
   });
 });
+
+describe("image storage selection", () => {
+  const base = { DB_CONNECTION: "mongodb://localhost/x", TOKEN_SECRET: "a".repeat(32) };
+
+  it("uses Cloudinary when CLOUDINARY_URL is set, local disk otherwise", () => {
+    expect(parseConfig(base).IMAGE_STORAGE).toBe("local");
+    expect(parseConfig({ ...base, CLOUDINARY_URL: "cloudinary://k:s@demo" }).IMAGE_STORAGE).toBe("cloudinary");
+  });
+
+  it("fails fast when Cloudinary is forced without credentials", () => {
+    expect(() => parseConfig({ ...base, IMAGE_STORAGE: "cloudinary" })).toThrow(/CLOUDINARY_URL/);
+  });
+});
+
+describe("AI_FAKE", () => {
+  const base = { DB_CONNECTION: "mongodb://localhost/x", TOKEN_SECRET: "a".repeat(32) };
+  it("is off by default and refused in production", () => {
+    expect(parseConfig(base).AI_FAKE).toBe(false);
+    expect(parseConfig({ ...base, AI_FAKE: "true" }).AI_FAKE).toBe(true);
+    expect(() => parseConfig({ ...base, AI_FAKE: "true", NODE_ENV: "production" })).toThrow(/AI_FAKE/);
+  });
+});

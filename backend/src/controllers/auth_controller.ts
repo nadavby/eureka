@@ -8,6 +8,7 @@ import matchModel from "../models/match_model";
 import { config } from "../lib/config";
 import { AppError, badRequest, conflict, forbidden, notFound, unauthorized } from "../lib/errors";
 import { issueTokens, verifyToken } from "../lib/tokens";
+import { createVisitor } from "../demo/scenario";
 
 const BCRYPT_ROUNDS = 10;
 const googleClient = new OAuth2Client();
@@ -114,20 +115,22 @@ const logout = async (req: Request, res: Response) => {
   res.status(200).json({ message: "Logged out" });
 };
 
-const sharesMatch = async (a: string, b: string) =>
+/** Contact details are shared only once both owners confirmed a match between them. */
+const sharesConfirmedMatch = async (a: string, b: string) =>
   !!(await matchModel.exists({
+    confirmedAt: { $exists: true },
     $or: [
       { userId1: a, userId2: b },
       { userId1: b, userId2: a },
     ],
   }));
 
-/** Contact details (email, phone) are visible only to the user themself and to users they share a match with. */
+/** Contact details (email, phone) are visible only to the user themself and to users they share a confirmed match with. */
 const getUserById = async (req: Request, res: Response) => {
   const user = await userModel.findById(req.params.id);
   if (!user) throw notFound("User not found");
   const viewer = req.user?.id;
-  const canSeeContact = !!viewer && (viewer === req.params.id || (await sharesMatch(viewer, req.params.id)));
+  const canSeeContact = !!viewer && (viewer === req.params.id || (await sharesConfirmedMatch(viewer, req.params.id)));
   if (canSeeContact) {
     res.json(user);
     return;
@@ -135,8 +138,11 @@ const getUserById = async (req: Request, res: Response) => {
   res.json({ _id: user._id, userName: user.userName, imgURL: user.imgURL });
 };
 
+const demoReadOnly = () => new AppError(403, "DEMO_READONLY", "Demo accounts can't be changed");
+
 const updateUser = async (req: Request, res: Response) => {
   if (req.user!.id !== req.params.id) throw forbidden("You can only edit your own profile");
+  if (await userModel.exists({ _id: req.params.id, demoRole: { $exists: true } })) throw demoReadOnly();
   const update = { ...req.body };
   if (update.password) update.password = await bcrypt.hash(update.password, BCRYPT_ROUNDS);
   if (update.userName && (await userModel.exists({ userName: update.userName, _id: { $ne: req.params.id } }))) {
@@ -149,9 +155,17 @@ const updateUser = async (req: Request, res: Response) => {
 
 const deleteUser = async (req: Request, res: Response) => {
   if (req.user!.id !== req.params.id) throw forbidden("You can only delete your own account");
+  if (await userModel.exists({ _id: req.params.id, demoRole: { $exists: true } })) throw demoReadOnly();
   const user = await userModel.findByIdAndDelete(req.params.id);
   if (!user) throw notFound("User not found");
   res.json({ message: "User deleted" });
 };
 
-export default { register, login, googleSignIn, refresh, logout, getUserById, updateUser, deleteUser };
+/** "Try the demo": a fresh private sandbox with a ready match, signed in. */
+const demoSignIn = async (_req: Request, res: Response) => {
+  const { visitor, matchId } = await createVisitor();
+  const tokens = await startSession(visitor);
+  res.status(200).json({ ...tokens, _id: visitor._id, matchId });
+};
+
+export default { register, login, googleSignIn, refresh, logout, getUserById, updateUser, deleteUser, demoSignIn };

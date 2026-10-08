@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'legacy', 'scripts'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -24,5 +24,10 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
     },
+  },
+  {
+    // shadcn components and context providers export helpers next to components by design
+    files: ["src/components/ui/**", "src/lib/theme.tsx", "src/features/auth/session.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
   },
 )

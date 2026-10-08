@@ -1,0 +1,324 @@
+{
+  "app": {
+    "name": "Eureka",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "browse": "Browse",
+    "myItems": "My items",
+    "map": "Map",
+    "chats": "Chats",
+    "report": "Report an item",
+    "reportLost": "I lost something",
+    "reportFound": "I found something",
+    "profile": "Profile",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signOut": "Sign out",
+    "menu": "Menu",
+    "notifications": "Notifications",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "landing": {
+    "headline": "Lost something? It may already be waiting for you.",
+    "lead": "Report what you lost or found with one photo. Eureka compares it with every report nearby and tells you both when there's a match.",
+    "haveAccount": "Already reported something?",
+    "howTitle": "How it works",
+    "step1Title": "Take a photo",
+    "step1Body": "Add a photo, the place and the day. Eureka reads the details from the photo for you.",
+    "step2Title": "Eureka compares",
+    "step2Body": "It looks for reports of the same object nearby and compares the photos side by side.",
+    "step3Title": "Confirm and meet",
+    "step3Body": "When you both agree it's the same item, chat and arrange the handover.",
+    "exampleTitle": "What a match looks like",
+    "exampleCaption": "Two reports, tied together with the reasons Eureka found.",
+    "exampleReason1": "Same torn corner at the bottom left",
+    "exampleReason2": "Initials N.B. embossed on the front",
+    "exampleLostWhere": "Tel Aviv, Rothschild Blvd",
+    "exampleFoundWhere": "Tel Aviv, Habima Square",
+    "exampleCategory": "Brown leather wallet"
+  },
+  "tag": {
+    "lost": "Lost",
+    "found": "Found",
+    "number": "Tag {{number}}",
+    "score": "{{score}}% match"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginLead": "Sign in to see your reports and matches.",
+    "registerTitle": "Create your account",
+    "registerLead": "You'll need it to report items and chat with the person who has yours.",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least 8 characters",
+    "userName": "Name",
+    "phone": "Phone",
+    "phoneHint": "Shown only to people you have a match with",
+    "avatar": "Profile picture (optional)",
+    "submitLogin": "Sign in",
+    "submitRegister": "Create account",
+    "or": "or",
+    "noAccount": "New to Eureka?",
+    "haveAccount": "Already have an account?",
+    "invalidCredentials": "That email and password don't match an account.",
+    "networkError": "Can't reach the server. Check your connection and try again.",
+    "googleFailed": "Google sign-in didn't work. Try again or use your email.",
+    "registered": "Account created. Sign in to continue.",
+    "errors": {
+      "email": "Enter a valid email address",
+      "password": "Use at least 8 characters",
+      "userName": "Enter a name of 2–40 characters",
+      "phone": "Enter a phone number"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "close": "Close",
+    "somethingWrong": "Something went wrong",
+    "notFoundTitle": "This page doesn't exist",
+    "notFoundBody": "The link may be old, or the item was removed.",
+    "goHome": "Go to the home page"
+  },
+  "browse": {
+    "title": "Open reports",
+    "lead": "Items people have lost or found and are still waiting for.",
+    "search": "Search reports",
+    "searchPlaceholder": "Search: black wallet, keys with a red tag…",
+    "typeFilter": "Lost or found",
+    "all": "All",
+    "category": "Category",
+    "anyCategory": "Any category",
+    "count_one": "{{count}} report",
+    "count_other": "{{count}} reports",
+    "empty": "No open reports yet",
+    "emptyBody": "When someone reports a lost or found item, it shows up here.",
+    "noResults": "Nothing matches these filters",
+    "noResultsBody": "Try fewer words or another category."
+  },
+  "mine": {
+    "title": "My items",
+    "lead": "What you reported, and how matching is going.",
+    "empty": "You haven't reported anything yet",
+    "emptyBody": "Report something you lost or found. Eureka starts looking for a match right away."
+  },
+  "status": {
+    "analyzing": "Reading the photo",
+    "searching": "Looking for matches",
+    "failed": "Matching failed",
+    "noMatch": "No match yet",
+    "resolved": "Returned",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches"
+  },
+  "categories": {
+    "wallet": "Wallet",
+    "keys": "Keys",
+    "phone": "Phone",
+    "bag": "Bag or backpack",
+    "id_card": "ID or card",
+    "glasses": "Glasses",
+    "watch": "Watch",
+    "jewelry": "Jewelry",
+    "headphones": "Headphones",
+    "laptop": "Laptop",
+    "tablet": "Tablet",
+    "camera": "Camera",
+    "umbrella": "Umbrella",
+    "clothing": "Clothing",
+    "toy": "Toy",
+    "bicycle": "Bicycle or scooter",
+    "pet": "Pet",
+    "documents": "Documents",
+    "other": "Something else"
+  },
+  "colors": {
+    "black": "Black",
+    "white": "White",
+    "gray": "Gray",
+    "silver": "Silver",
+    "gold": "Gold",
+    "brown": "Brown",
+    "beige": "Beige",
+    "red": "Red",
+    "orange": "Orange",
+    "yellow": "Yellow",
+    "green": "Green",
+    "blue": "Blue",
+    "navy": "Navy",
+    "purple": "Purple",
+    "pink": "Pink",
+    "multicolored": "Multicolored"
+  },
+  "report": {
+    "kicker": {
+      "lost": "New lost report",
+      "found": "New found report"
+    },
+    "title": {
+      "lost": "What did you lose?",
+      "found": "What did you find?"
+    },
+    "progress": "Report progress",
+    "step": {
+      "photo": "Photo",
+      "details": "Details",
+      "place": "Place and date"
+    },
+    "photoTitle": "Add a photo",
+    "photoHint": {
+      "lost": "An old photo of the item works well. Eureka uses it to recognise the item in finders' photos.",
+      "found": "Photograph the item as it is, in good light. Don't include anyone's ID number or card details."
+    },
+    "photoCta": "Choose a photo or drop it here",
+    "photoFormats": "JPEG, PNG, WebP or HEIC, up to 8 MB",
+    "photoPreview": "Selected photo",
+    "photoReplace": "Choose another photo",
+    "category": "Category",
+    "categoryPlaceholder": "Choose a category",
+    "colors": "Colors",
+    "brand": "Brand (if you know it)",
+    "description": "Anything that makes it stand out",
+    "descriptionPlaceholder": {
+      "lost": "A scratch on the back, a sticker, what was inside…",
+      "found": "Where exactly it was, its condition, anything attached to it…"
+    },
+    "descriptionHint": "Details like damage, stickers or keychains help most. Eureka also reads them from the photo.",
+    "where": {
+      "lost": "Where did you lose it?",
+      "found": "Where did you find it?"
+    },
+    "when": {
+      "lost": "When did you lose it?",
+      "found": "When did you find it?"
+    },
+    "useMyLocation": "Use my location",
+    "locateFailed": "We couldn't get your location. Tap the map instead.",
+    "mapHint": "Tap the map to drop the pin, then drag it to adjust.",
+    "placeName": "Place name",
+    "next": "Next",
+    "submit": "Report and start matching",
+    "submitted": "Reported. Eureka is looking for matches.",
+    "submitFailed": "The report couldn't be sent. Check your connection and try again.",
+    "errors": {
+      "photo": "Add a photo to continue.",
+      "category": "Choose a category to continue.",
+      "location": "Drop a pin on the map."
+    }
+  },
+  "item": {
+    "category": "Category",
+    "date": {
+      "lost": "Lost on",
+      "found": "Found on"
+    },
+    "place": "Place",
+    "brand": "Brand",
+    "features": "Details",
+    "visibleText": "Text on it",
+    "aiNote": "Details and text were read from the photo by Eureka.",
+    "matchesTitle": "Possible matches",
+    "noMatches": "No match yet. Eureka will tell you as soon as a similar report comes in.",
+    "searching": "Eureka is still comparing this report with others nearby.",
+    "delete": "Delete report",
+    "deleteTitle": "Delete this report?",
+    "deleteBody": "Its photo, its matches and their chats are deleted too. This can't be undone.",
+    "deleted": "Report deleted",
+    "deleteFailed": "The report couldn't be deleted. Try again.",
+    "isItYours": {
+      "found": "Is this yours?",
+      "lost": "Have you found this?"
+    },
+    "isItYoursBody": {
+      "found": "Report it as lost with a photo of it. If it's the same item, Eureka will match you with the finder.",
+      "lost": "Report it as found with a photo. If it's the same item, Eureka will match you with the owner."
+    }
+  },
+  "match": {
+    "kicker": "Possible match",
+    "title": "Is this the same item?",
+    "lead": "Compare the photos and the details. Only you can be sure.",
+    "why": "Why Eureka thinks so",
+    "noReasons": "The photos and details are very similar.",
+    "differences": "What looks different",
+    "nextTitle": "What's next",
+    "nextBody": "If it's yours, confirm. When you both confirm, you'll see each other's contact details.",
+    "waitingForThem": "You confirmed. Waiting for the other person to confirm too.",
+    "theyConfirmed": "The other person already confirmed. Confirm too if it's the same item.",
+    "confirm": "Yes, it's the same item",
+    "reject": "Not the same item",
+    "rejectTitle": "Not the same item?",
+    "rejectBody": "The match and its chat are removed. Eureka keeps looking for other matches.",
+    "doneTitle": "Matched",
+    "doneBody": "You both confirmed. Contact {{name}} to arrange the handover.",
+    "openChat": "Message {{name}}",
+    "confirmedToast": "Confirmed. We'll let you know when they confirm too.",
+    "bothConfirmedToast": "You both confirmed. Arrange the handover in the chat.",
+    "rejectedToast": "Match removed",
+    "actionFailed": "That didn't work. Try again.",
+    "state": {
+      "new": "New match",
+      "waiting": "You confirmed, waiting for them",
+      "theyConfirmed": "They confirmed, waiting for you",
+      "confirmed": "Both confirmed"
+    },
+    "kickerConfirmed": "Confirmed match",
+    "titleConfirmed": "It's a match",
+    "leadConfirmed": "You both confirmed this is the same item."
+  },
+  "chat": {
+    "conversations": "Conversations",
+    "thread": "Conversation",
+    "viewMatch": "View match",
+    "placeholder": "Write a message",
+    "send": "Send",
+    "sent": "Sent",
+    "read": "Read",
+    "emptyThread": "No messages yet. Ask something only the owner would know.",
+    "noConversations": "Conversations start when Eureka finds a match for one of your items.",
+    "pickTitle": "Choose a conversation",
+    "pickBody": "Each conversation belongs to one match."
+  },
+  "notifications": {
+    "newMatch": "Possible match found",
+    "newMatchBody": "Eureka found a report that may be the same item.",
+    "view": "View",
+    "markAll": "Mark all as read",
+    "empty": "No notifications yet",
+    "labelUnread_one": "Notifications, {{count}} unread",
+    "labelUnread_other": "Notifications, {{count}} unread"
+  },
+  "map": {
+    "title": "Map",
+    "lead": "Where open reports were lost or found."
+  },
+  "profile": {
+    "title": "Profile",
+    "lead": "Your name and phone are shown only to people you've confirmed a match with.",
+    "changePhoto": "Change photo",
+    "saved": "Saved",
+    "saveFailed": "Your changes couldn't be saved. Try again.",
+    "qrTitle": "Your Eureka code",
+    "qrBody": "Stick it on things you carry. Whoever finds them can scan it to reach your profile.",
+    "publicLead": "Open reports",
+    "noOpenReports": "No open reports"
+  },
+  "demo": {
+    "try": "Try the demo",
+    "hint": "No sign-up. You get your own lost wallet, a match, and the finder waiting in the chat.",
+    "banner": "You're in a private demo. Report things, chat, confirm. Everything is deleted within a day.",
+    "leave": "Leave the demo",
+    "readOnly": "Demo accounts can't be edited.",
+    "DEMO_BUSY": "The demo is busy right now. Try again in a few minutes.",
+    "DEMO_UNAVAILABLE": "The demo is being prepared. Try again in a minute."
+  }
+}

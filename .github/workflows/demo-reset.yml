@@ -1,0 +1,49 @@
+name: Demo reset
+
+# Rebuilds the public demo every night: removes all visitor sandboxes and recreates the
+# seed bots, their items (analysed by the real matching pipeline) and the visitor scenario.
+on:
+  schedule:
+    - cron: "0 3 * * *" # 03:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    name: Reseed the demo
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      NODE_ENV: production
+      VECTOR_SEARCH: atlas
+      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+      TOKEN_SECRET: ${{ secrets.TOKEN_SECRET }}
+      CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      DOMAIN_BASE: ${{ vars.API_URL }}
+    steps:
+      - name: Skip when the deployment secrets are not configured (forks)
+        id: guard
+        working-directory: .
+        run: |
+          if [ -z "$DB_CONNECTION" ] || [ -z "$CLOUDINARY_URL" ]; then
+            echo "Demo secrets are not set; nothing to reset."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip != 'true'
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+        if: steps.guard.outputs.skip != 'true'
+      - run: npm run seed:demo
+        if: steps.guard.outputs.skip != 'true'

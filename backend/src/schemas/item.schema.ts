@@ -28,9 +28,10 @@ const colors = z.preprocess(
 export const createItemBody = z.object({
   itemType: z.string().toLowerCase().pipe(z.enum(["lost", "found"])),
   description: z.string().trim().max(1000).optional(),
-  category: z.string().trim().max(60).optional(),
-  date: z.coerce.date().optional(),
-  location: location.optional(),
+  category: z.string().trim().min(1).max(60),
+  date: z.coerce.date(),
+  location,
+  placeName: z.string().trim().max(120).optional(),
   colors: colors.optional(),
   brand: z.string().trim().max(60).optional(),
   condition: z.enum(["new", "worn", "damaged", "other"]).optional(),
@@ -41,4 +42,6 @@ export const createItemBody = z.object({
 export const listItemsQuery = z.object({
   itemType: z.enum(["lost", "found"]).optional(),
   userId: objectId.optional(),
+  /** "true": only items that are not resolved yet */
+  open: z.enum(["true", "false"]).optional(),
 });

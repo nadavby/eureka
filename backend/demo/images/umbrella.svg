@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- green folded umbrella with a wooden J handle and a white strap, leaning on a bus-stop wall -->
+  <rect width="400" height="300" fill="#b9c4cc"/>
+  <rect x="0" y="230" width="400" height="70" fill="#8d9aa3"/>
+  <ellipse cx="210" cy="252" rx="60" ry="8" fill="#000" opacity=".2"/>
+  <g transform="rotate(-16 200 150)">
+    <path d="M190 40 l20 0 l14 160 l-48 0z" fill="#2f9e5a"/>
+    <path d="M196 60 l4 140 M206 60 l8 140" stroke="#237a45" stroke-width="3"/>
+    <rect x="186" y="120" width="40" height="10" rx="3" fill="#f7f7f5"/>
+    <line x1="200" y1="200" x2="200" y2="236" stroke="#5b5f63" stroke-width="6"/>
+    <path d="M200 236 q0 30 26 30 q20 0 20 -20" fill="none" stroke="#8a5534" stroke-width="12" stroke-linecap="round"/>
+  </g>
+</svg>

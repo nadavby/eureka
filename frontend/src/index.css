@@ -1,0 +1,198 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@import "@fontsource/rubik/500.css";
+@import "@fontsource/rubik/700.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans-hebrew/400.css";
+@import "@fontsource/ibm-plex-sans-hebrew/500.css";
+@import "@fontsource/ibm-plex-sans-hebrew/600.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Eureka design tokens. The subject is a lost-property office:
+ * ink on cool paper, manila claim tags, a signal blue for actions,
+ * and stamp colors for lost / found.
+ */
+@theme inline {
+  --font-heading: "Rubik", "IBM Plex Sans Hebrew", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", "IBM Plex Sans Hebrew", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* domain colors */
+  --color-manila: var(--manila);
+  --color-manila-foreground: var(--manila-foreground);
+  --color-manila-edge: var(--manila-edge);
+  --color-lost: var(--lost);
+  --color-found: var(--found);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  --background: #f5f7fa; /* paper */
+  --foreground: #14213d; /* ink */
+  --card: #ffffff;
+  --card-foreground: #14213d;
+  --popover: #ffffff;
+  --popover-foreground: #14213d;
+  --primary: #2563eb; /* signal */
+  --primary-foreground: #ffffff;
+  --secondary: #e8ecf3;
+  --secondary-foreground: #14213d;
+  --muted: #eceff4;
+  --muted-foreground: #5b6578;
+  --accent: #e8ecf3;
+  --accent-foreground: #14213d;
+  --destructive: #c8361d;
+  --border: #dde2ea;
+  --input: #d3d9e3;
+  --ring: #2563eb;
+
+  --manila: #ebc76a;
+  --manila-foreground: #3b2f10;
+  --manila-edge: #c9a24a;
+  --lost: #c93e27;
+  --found: #147a52;
+}
+
+.dark {
+  --background: #0d1323; /* night */
+  --foreground: #e8ecf5;
+  --card: #151d33;
+  --card-foreground: #e8ecf5;
+  --popover: #151d33;
+  --popover-foreground: #e8ecf5;
+  --primary: #5b8df6;
+  --primary-foreground: #0d1323;
+  --secondary: #1d2742;
+  --secondary-foreground: #e8ecf5;
+  --muted: #1a2339;
+  --muted-foreground: #98a3ba;
+  --accent: #1d2742;
+  --accent-foreground: #e8ecf5;
+  --destructive: #f07a63;
+  --border: #253051;
+  --input: #2c3860;
+  --ring: #5b8df6;
+
+  --manila: #c9a54c;
+  --manila-foreground: #241c08;
+  --manila-edge: #a5853a;
+  --lost: #f07a63;
+  --found: #3cc08e;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans antialiased;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground min-h-dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading tracking-tight;
+  }
+  /* Hebrew headings read better without negative tracking */
+  :lang(he) h1,
+  :lang(he) h2,
+  :lang(he) h3 {
+    letter-spacing: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes draw-string {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Map pins: a tiny claim tag with a punched hole (see src/features/map/leaflet.ts). */
+.eureka-pin {
+  display: block;
+  width: 28px;
+  height: 36px;
+  background: var(--manila);
+  border: 2px solid var(--manila-edge);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% 72%, 50% 100%, 0 72%, 0 6px);
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.25));
+}
+.eureka-pin > span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 5px auto 0;
+  border-radius: 9999px;
+  background: var(--background);
+}
+.eureka-pin--lost {
+  background: var(--lost);
+  border-color: var(--lost);
+}
+.eureka-pin--found {
+  background: var(--found);
+  border-color: var(--found);
+}
+/* Leaflet controls follow the theme */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--muted);
+}
+.dark .leaflet-tile-pane {
+  filter: brightness(0.75) contrast(1.1) saturate(0.8);
+}
+
+/* Wide letter-spacing suits Latin caps but breaks Hebrew letterforms apart. */
+:lang(he) .tracking-widest,
+:lang(he) .tracking-wider {
+  letter-spacing: 0;
+}

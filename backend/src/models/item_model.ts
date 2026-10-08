@@ -1,160 +1,94 @@
 import mongoose from "mongoose";
+import { ItemAttributes, MATCHING_STATUSES, MatchingStatus } from "../matching/types";
 
 export interface IItem {
   _id?: string;
   userId: string;
   imageUrl: string;
-  itemType: 'lost' | 'found';
+  /** Storage handle of the image, used to delete it with the item. */
+  imagePublicId?: string;
+  itemType: "lost" | "found";
   description?: string;
-  location?: {
-    lat: number;
-    lng: number;
-  } | string;
+  location?: { lat: number; lng: number } | string;
+  /** Human-readable place, e.g. "Tel Aviv, Habima Square" (from the map or typed). */
+  placeName?: string;
   date?: Date;
   category?: string;
   colors?: string[];
   brand?: string;
-  condition?: 'new' | 'worn' | 'damaged' | 'other';
+  condition?: "new" | "worn" | "damaged" | "other";
   flaws?: string;
   material?: string;
-  visionApiData?: {
-    labels?: string[];
-    objects?: Array<{
-      name: string;
-      score: number;
-      boundingBox?: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }
-    }>;
-    texts?: Array<{
-      text: string;
-      confidence?: number;
-      boundingBox?: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }
-    }>;
-    logos?: Array<{
-      description: string;
-      score: number;
-      boundingBox?: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-      }
-    }>;
-  };
-  matchedItemId?: string;
+  /** Extracted by Gemini from the photo and the user's fields. */
+  attributes?: ItemAttributes;
+  /** Multimodal embedding (photo + canonical text). Large, so never selected by default. */
+  embedding?: number[];
+  matchingStatus?: MatchingStatus;
+  matchingError?: string;
+  matchCount?: number;
   isResolved?: boolean;
+  /** Demo sandbox: visible only to sandboxOwnerId and never a matching candidate. */
+  sandbox?: boolean;
+  sandboxOwnerId?: string;
+  createdAt?: Date;
 }
+
+const attributesSchema = new mongoose.Schema<ItemAttributes>(
+  {
+    category: String,
+    subcategory: String,
+    brand: String,
+    model: String,
+    colors: [String],
+    material: String,
+    distinctiveFeatures: [String],
+    visibleText: [String],
+    description: String,
+  },
+  { _id: false }
+);
 
 const itemSchema = new mongoose.Schema<IItem>(
   {
-    userId: {
-      type: String,
-      required: true,
-    },
-    imageUrl: {
-      type: String,
-      required: true,
-    },
-    itemType: {
-      type: String,
-      enum: ['lost', 'found'],
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-    location: {
-      type: mongoose.Schema.Types.Mixed,
-      required: true,
-    },
-    category: {
-      type: String,
-      required: true,
-    },
-    colors: {
-      type: [String],
-      required: true,
-    },
-    brand: {
-      type: String,
-    },
-    condition: {
-      type: String,
-      required: true,
-    },
-    flaws: {
-      type: String,
-    },
-    material: {
-      type: String,
-      required: true,
-    },
-    visionApiData: {
-      labels: [String],
-      objects: [{
-        name: String,
-        score: Number,
-        boundingBox: {
-          x: Number,
-          y: Number,
-          width: Number,
-          height: Number,
-        }
-      }],
-      texts: [{
-        text: String,
-        confidence: Number,
-        boundingBox: {
-          x: Number,
-          y: Number,    
-          width: Number,
-          height: Number,
-        }
-      }],
-      logos: [{
-        description: String,    
-        score: Number,
-        boundingBox: {
-          x: Number,
-          y: Number,
-          width: Number,
-          height: Number,
-        }
-      }]
-    },
-    matchedItemId: {
-      type: String,
-    },
-    isResolved: {
-      type: Boolean,
-      default: false,
-    },
+    userId: { type: String, required: true, index: true },
+    imageUrl: { type: String, required: true },
+    imagePublicId: String,
+    itemType: { type: String, enum: ["lost", "found"], required: true },
+    description: String,
+    date: { type: Date, required: true },
+    location: { type: mongoose.Schema.Types.Mixed, required: true },
+    placeName: String,
+    category: { type: String, required: true },
+    colors: { type: [String], default: [] },
+    brand: String,
+    condition: { type: String, enum: ["new", "worn", "damaged", "other"] },
+    flaws: String,
+    material: String,
+    attributes: attributesSchema,
+    embedding: { type: [Number], select: false },
+    matchingStatus: { type: String, enum: MATCHING_STATUSES, default: "analyzing" },
+    matchingError: String,
+    matchCount: { type: Number, default: 0 },
+    isResolved: { type: Boolean, default: false },
+    sandbox: { type: Boolean, default: false },
+    sandboxOwnerId: { type: String, index: true },
   },
   { timestamps: true }
 );
 
-// Hide Mongoose internals from API responses.
+// Candidate lookups: opposite type, same category, still open.
+itemSchema.index({ itemType: 1, category: 1, isResolved: 1 });
+
 itemSchema.set("toJSON", {
   transform: (_doc, ret: Record<string, unknown>) => {
     delete ret.__v;
+    delete ret.embedding;
+    delete ret.imagePublicId;
+    delete ret.sandboxOwnerId;
     return ret;
   },
 });
 
 const itemModel = mongoose.model<IItem>("items", itemSchema);
 
-export default itemModel; 
+export default itemModel;

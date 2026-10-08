@@ -50,7 +50,14 @@ describe("user privacy", () => {
     }
   });
 
-  it("a matched user sees contact details", async () => {
+  it("an unconfirmed match does not reveal contact details yet", async () => {
+    const res = await request(app).get(`/auth/${alice.id}`).set(bearer(bob));
+    expect(res.body.email).toBeUndefined();
+    expect(res.body.phoneNumber).toBeUndefined();
+  });
+
+  it("a confirmed match shares contact details", async () => {
+    await matchModel.updateOne({ userId1: alice.id, userId2: bob.id }, { confirmedAt: new Date(), user1Confirmed: true, user2Confirmed: true });
     const res = await request(app).get(`/auth/${alice.id}`).set(bearer(bob));
     expect(res.body.email).toBe("alice@sec-users.test");
     expect(res.body.phoneNumber).toBe("+972500000000");

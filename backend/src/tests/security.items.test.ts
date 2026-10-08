@@ -7,12 +7,15 @@ import { Express } from "express";
 import initApp from "../server";
 import userModel from "../models/user_model";
 import itemModel from "../models/item_model";
-import visionService from "../services/vision-service";
-import geminiService from "../services/gemini-service";
 import { itemFields, listUploadedItemFiles, postItem, removeNewUploadedItemFiles } from "./test_utils";
 
-jest.mock("../services/vision-service", () => ({ __esModule: true, default: { getImageAnalysis: jest.fn() } }));
-jest.mock("../services/gemini-service", () => ({ __esModule: true, default: { evaluateMatch: jest.fn() } }));
+import { fakeAi } from "./setup/fake-ai";
+
+// Gemini is replaced by a deterministic fake so the tests are offline.
+jest.mock("../matching/ai-client", () => ({
+  ...jest.requireActual("../matching/ai-client"),
+  createAiClient: () => jest.requireActual("./setup/fake-ai").fakeAi,
+}));
 
 let app: Express;
 let filesBefore: string[];
@@ -31,8 +34,7 @@ const category = "SecurityItemsCategory";
 beforeAll(async () => {
   app = await initApp();
   filesBefore = listUploadedItemFiles();
-  (visionService.getImageAnalysis as jest.Mock).mockResolvedValue({ labels: [], objects: [], texts: [], logos: [] });
-  (geminiService.evaluateMatch as jest.Mock).mockResolvedValue({ confidenceScore: 0, reasoning: "" });
+  fakeAi.verdict = { ...fakeAi.verdict, score: 0 };
   await userModel.deleteMany({ email: /@sec-items\.test$/ });
   owner = await signUp("itemsOwner");
   other = await signUp("itemsOther");
@@ -68,12 +70,12 @@ describe("item security", () => {
     expect(res.body.message).toBe("Only image uploads are allowed");
   });
 
-  it("rejects images over 5 MB", async () => {
+  it("rejects uploads over 8 MB", async () => {
     const res = await request(app)
       .post("/items")
       .set("Authorization", `Bearer ${owner.token}`)
       .field("itemType", "lost")
-      .attach("image", tmpFile("big.png", Buffer.alloc(6 * 1024 * 1024)), { contentType: "image/png" });
+      .attach("image", tmpFile("big.png", Buffer.alloc(9 * 1024 * 1024)), { contentType: "image/png" });
     expect(res.status).toBe(413);
   });
 
@@ -97,5 +99,19 @@ describe("item security", () => {
   it("validates the listing query", async () => {
     expect((await request(app).get("/items?itemType=stolen")).status).toBe(400);
     expect((await request(app).get("/items?userId=not-an-id")).status).toBe(400);
+  });
+});
+
+describe("item listing", () => {
+  it("filters to open items and keeps the place name", async () => {
+    const res = await postItem(app, owner.token, { ...itemFields({ category }), placeName: "Tel Aviv, Habima Square" } as never);
+    expect(res.status).toBe(201);
+    expect(res.body.placeName).toBe("Tel Aviv, Habima Square");
+    await itemModel.updateOne({ _id: res.body._id }, { isResolved: true });
+
+    const all = await request(app).get(`/items?userId=${owner.id}`);
+    const open = await request(app).get(`/items?userId=${owner.id}&open=true`);
+    expect(all.body.some((i: { _id: string }) => i._id === res.body._id)).toBe(true);
+    expect(open.body.some((i: { _id: string }) => i._id === res.body._id)).toBe(false);
   });
 });

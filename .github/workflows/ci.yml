@@ -25,7 +25,6 @@ jobs:
       DOMAIN_BASE: http://localhost:3000
       # Dummy keys: tests mock the Google AI services
       GEMINI_API_KEY: ci-dummy
-      GOOGLE_CLOUD_VISION_API_KEY: ci-dummy
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,7 +43,7 @@ jobs:
       - run: npm test
 
   frontend:
-    name: Frontend · lint, build
+    name: Frontend · lint, type-check, test, build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,7 +56,9 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      - run: npx eslint .
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
 
   docker:

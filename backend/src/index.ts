@@ -5,6 +5,7 @@ import initApp from "./server";
 import { initSocket } from "./services/notification.socket.service";
 import { config } from "./lib/config";
 import { logger } from "./lib/logger";
+import { queue } from "./jobs";
 
 const start = async () => {
   const app = await initApp();
@@ -17,7 +18,18 @@ const start = async () => {
       : http.createServer(app);
 
   initSocket(server);
+  queue.start();
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, "Server listening"));
+
+  // Render sends SIGTERM on deploys and sleep: finish running jobs, then exit.
+  const shutdown = async (signal: string) => {
+    logger.info({ signal }, "Shutting down");
+    server.close();
+    await queue.stop();
+    process.exit(0);
+  };
+  process.once("SIGTERM", () => void shutdown("SIGTERM"));
+  process.once("SIGINT", () => void shutdown("SIGINT"));
 };
 
 start().catch((err) => {

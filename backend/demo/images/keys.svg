@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- two keys (silver and brass) on a red carabiner with a blue star tag, on grey pavement -->
+  <rect width="400" height="300" fill="#9aa1a8"/>
+  <g fill="#8b9299" opacity=".6"><rect x="0" y="0" width="130" height="100"/><rect x="135" y="105" width="130" height="95"/><rect x="270" y="0" width="130" height="100"/><rect x="0" y="205" width="130" height="95"/><rect x="270" y="205" width="130" height="95"/></g>
+  <ellipse cx="205" cy="228" rx="110" ry="14" fill="#000" opacity=".18"/>
+  <path d="M120 110 a38 38 0 1 1 0 2" fill="none" stroke="#d03b2f" stroke-width="12" stroke-linecap="round"/>
+  <rect x="152" y="96" width="14" height="30" rx="4" fill="#9b2a20"/>
+  <g transform="rotate(18 200 160)">
+    <circle cx="190" cy="140" r="24" fill="#c9ced4" stroke="#8d949b" stroke-width="3"/><circle cx="190" cy="140" r="7" fill="#9aa1a8"/>
+    <path d="M212 136 h110 v14 h-12 v12 h-10 v-12 h-10 v16 h-10 v-16 h-68z" fill="#c9ced4" stroke="#8d949b" stroke-width="3"/>
+  </g>
+  <g transform="rotate(-24 180 175)">
+    <circle cx="176" cy="168" r="20" fill="#d8c27a" stroke="#a88f3f" stroke-width="3"/><circle cx="176" cy="168" r="6" fill="#9aa1a8"/>
+    <path d="M194 164 h86 v12 h-10 v10 h-9 v-10 h-9 v12 h-9 v-12 h-49z" fill="#d8c27a" stroke="#a88f3f" stroke-width="3"/>
+  </g>
+  <path d="M96 150 l10 22 l24 3 l-18 16 l5 24 l-21 -12 l-21 12 l5 -24 l-18 -16 l24 -3z" fill="#2f6fdb" stroke="#1d4fa8" stroke-width="2"/>
+</svg>

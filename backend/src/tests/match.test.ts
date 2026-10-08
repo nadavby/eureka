@@ -8,8 +8,6 @@ import userModel from "../models/user_model";
 import itemModel from "../models/item_model";
 import matchModel from "../models/match_model";
 import notificationModel from "../models/notification_model";
-import visionService from "../services/vision-service";
-import geminiService from "../services/gemini-service";
 import {
   itemFields,
   listUploadedItemFiles,
@@ -17,20 +15,14 @@ import {
   removeNewUploadedItemFiles,
 } from "./test_utils";
 
-// External Google APIs are mocked: Vision returns nothing interesting and the
-// Gemini matcher always reports a high-confidence match, so uploading a lost
-// item and a compatible found item deterministically creates a match.
-jest.mock("../services/vision-service", () => ({
-  __esModule: true,
-  default: { getImageAnalysis: jest.fn() },
-}));
-jest.mock("../services/gemini-service", () => ({
-  __esModule: true,
-  default: { evaluateMatch: jest.fn() },
-}));
+import { queue } from "../jobs";
+import { fakeAi } from "./setup/fake-ai";
 
-const mockedVision = visionService.getImageAnalysis as jest.Mock;
-const mockedGemini = geminiService.evaluateMatch as jest.Mock;
+// Gemini is replaced by a deterministic fake so the tests are offline.
+jest.mock("../matching/ai-client", () => ({
+  ...jest.requireActual("../matching/ai-client"),
+  createAiClient: () => jest.requireActual("./setup/fake-ai").fakeAi,
+}));
 
 type TestUser = {
   email: string;
@@ -110,7 +102,7 @@ const createItem = async (
     })
   );
   expect(res.statusCode).toBe(201);
-  // The create endpoint does not return the generated _id, so look it up.
+  await queue.drain(); // run the background matching jobs
   const saved = await itemModel.findOne({ userId: user._id, description });
   expect(saved).not.toBeNull();
   return saved!._id.toString();
@@ -126,13 +118,8 @@ beforeAll(async () => {
   filesBefore = listUploadedItemFiles();
   await cleanup();
 
-  mockedVision.mockResolvedValue({
-    labels: [],
-    objects: [],
-    texts: [],
-    logos: [],
-  });
-  mockedGemini.mockResolvedValue({ confidenceScore: 90, reasoning: "mock" });
+  // The fake AI reports a confident match for every plausible pair.
+  fakeAi.verdict = { ...fakeAi.verdict, score: 90 };
 
   await registerAndLogin(owner);
   await registerAndLogin(finder);
@@ -338,11 +325,13 @@ describe("Match confirmation", () => {
     expect(lost.body.isResolved).toBe(true);
     expect(found.body.isResolved).toBe(true);
 
-    const getMatch = await request(app)
-      .get(`/match/${matchId}`)
-      .set(auth(owner));
-    expect(getMatch.statusCode).toBe(404);
+    // The confirmed match (and its chat) is kept; both owners can now see each other's contact details.
+    const getMatch = await request(app).get(`/match/${matchId}`).set(auth(owner));
+    expect(getMatch.statusCode).toBe(200);
+    expect(getMatch.body.confirmedAt).toBeDefined();
     expect(await notificationModel.countDocuments({ matchId })).toBe(0);
+    const finderProfile = await request(app).get(`/auth/${finder._id}`).set(auth(owner));
+    expect(finderProfile.body.phoneNumber).toBe(finder.phoneNumber);
   });
 });
 
