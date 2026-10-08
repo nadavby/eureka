@@ -10,7 +10,7 @@ import LostItems from "./LostItems";
 import ItemUpload from "./ItemUpload";
 import ItemDetail from "./ItemDetail";
 import Navigation from "./Navigation";
-import { NotificationsProvider } from "../hooks/useNotifications";
+import { NotificationsProvider } from "../hooks/NotificationsProvider";
 import MatchConfirmation from "./MatchConfirmation";
 import LostItemsMap from "./LostItemsMap";
 import PublicUserProfile from "./PublicUserProfile";

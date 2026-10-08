@@ -1,7 +1,8 @@
 import { FC, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faImage, faEnvelope, faUser, faLock, faPhone } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faUser, faLock, faPhone } from "@fortawesome/free-solid-svg-icons";
 import { useForm } from "react-hook-form";
+import axios from "axios";
 import userService, { IUser } from "../../services/user-service";
 import avatar from "../../assets/avatar.png";
 import { z } from "zod";
@@ -83,9 +84,9 @@ export const RegistrationForm: FC = () => {
         const registerRes = await userService.register(user);
         console.log("Registration successful:", registerRes);
         navigate("/login");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Registration failed:", error);
-        if (error.response) {
+        if (axios.isAxiosError<string | { message?: string }>(error) && error.response) {
           if (typeof error.response.data === 'string') {
             setServerError(error.response.data);
           } else if (error.response.data && error.response.data.message) {
@@ -93,13 +94,13 @@ export const RegistrationForm: FC = () => {
           } else {
             setServerError(`Registration failed (${error.response.status}). Please try again.`);
           }
-        } else if (error.message) {
+        } else if (error instanceof Error && error.message) {
           setServerError(error.message);
         } else {
           setServerError("An error occurred during registration. Please try again.");
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Unexpected error:", error);
       setServerError("An unexpected error occurred. Please try again.");
     }

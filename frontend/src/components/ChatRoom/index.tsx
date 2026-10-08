@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import chatSocketService, { IChatMessage } from '../../services/chat.socket.service';
-import itemService, { Item } from '../../services/item-service';
-import matchService, { IMatch, IMatchResponse } from '../../services/match-service';
+import { Item } from '../../services/item-service';
+import matchService, { IMatch } from '../../services/match-service';
 import { useNotifications } from '../../hooks/useNotifications';
 import './ChatRoom.css';
 

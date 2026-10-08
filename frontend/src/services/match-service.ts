@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient, CanceledError } from './api-client';
 export { CanceledError };
 

@@ -6,6 +6,26 @@ type IItemWithTimestamps = IItem & {
   updatedAt?: Date;
 };
 
+interface VisionObjectData {
+  name?: string;
+  score?: number;
+}
+
+interface VisionTextData {
+  text?: string;
+}
+
+interface VisionLogoData {
+  description?: string;
+}
+
+interface VisionApiData {
+  labels?: string[];
+  objects?: VisionObjectData[];
+  texts?: VisionTextData[];
+  logos?: VisionLogoData[];
+}
+
 interface VisionSummary {
   labels: string[];
   objects: Array<{
@@ -68,16 +88,16 @@ class GeminiService {
     });
   }
   
-  private extractVisionSummary(visionApiData: any): VisionSummary {
+  private extractVisionSummary(visionApiData: VisionApiData | undefined): VisionSummary {
     try {
       return {
         labels: Array.isArray(visionApiData?.labels) ? visionApiData.labels.slice(0, 10) : [],
-        objects: Array.isArray(visionApiData?.objects) ? visionApiData.objects.map((obj: any) => ({
+        objects: Array.isArray(visionApiData?.objects) ? visionApiData.objects.map((obj: VisionObjectData) => ({
           name: obj?.name || 'unknown',
           score: typeof obj?.score === 'number' ? obj.score : 0
         })) : [],
-        texts: Array.isArray(visionApiData?.texts) ? visionApiData.texts.map((text: any) => text?.text || '').filter(Boolean) : [],
-        logos: Array.isArray(visionApiData?.logos) ? visionApiData.logos.map((logo: any) => logo?.description || '').filter(Boolean) : [],
+        texts: Array.isArray(visionApiData?.texts) ? visionApiData.texts.map((text: VisionTextData) => text?.text || '').filter(Boolean) : [],
+        logos: Array.isArray(visionApiData?.logos) ? visionApiData.logos.map((logo: VisionLogoData) => logo?.description || '').filter(Boolean) : [],
       };
     } catch (error) {
       console.error('Error extracting vision summary:', error);
@@ -190,7 +210,7 @@ Analyze the items and return ONLY a JSON response in the format:
         return { confidenceScore: 0, reasoning: "" };
       }
     } catch (error) {
-      if ((error as any).status === 429) {
+      if ((error as { status?: number }).status === 429) {
         console.error("Rate limit exceeded. Please try again in a few seconds.");
         return { 
           confidenceScore: 0, 

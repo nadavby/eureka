@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAuth } from '../../hooks/useAuth';
 import { Dropdown } from 'react-bootstrap';
@@ -17,7 +16,6 @@ interface NotificationProviderProps {
 const NotificationProvider: React.FC<NotificationProviderProps> = ({ children, notificationTrigger }) => {
   const { notifications, removeNotification, clearNotifications, markAsRead, markAllAsRead } = useNotifications();
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [show, setShow] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<INotification | null>(null);
   const [showMatchModal, setShowMatchModal] = useState(false);
@@ -48,15 +46,6 @@ const NotificationProvider: React.FC<NotificationProviderProps> = ({ children, n
     e.stopPropagation();
     if (!notification.isRead && notification._id) {
       await markAsRead(notification._id);
-    }
-  };
-
-  const handleViewDetails = () => {
-    setShowMatchModal(false);
-    setShow(false);
-    
-    if (selectedNotification?.matchId) {
-      navigate(`/match-confirmation/${selectedNotification.matchId}`);
     }
   };
 

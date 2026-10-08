@@ -2,7 +2,6 @@
 
 import { Request, Response } from "express";
 import notificationModel from "../models/notification_model";
-import mongoose from "mongoose";
 
 const getAllByUserId = async (req: Request, res: Response) => {
   const userId = req.query.userId;
@@ -128,10 +127,10 @@ const DeleteAllByUserId = async (req: Request, res: Response) => {
     return;
   }
   try {
-    const result = await notificationModel.deleteMany({ userId: userId });
+    await notificationModel.deleteMany({ userId: userId });
     res.status(200).send({ message: "All notifications deleted successfully" });
     return;
-  } catch (error) {
+  } catch {
     res.status(500).send({ error: "Internal server error" });
     return;
   }

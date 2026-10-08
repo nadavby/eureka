@@ -2,11 +2,12 @@ import { FC, useEffect, useState } from 'react';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faUser, faCheckCircle, faPercentage, faMapMarkerAlt, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCheckCircle, faPercentage, faMapMarkerAlt, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import './styles.css';
 import itemService, { Item } from '../../services/item-service';
 import matchService, { IMatch } from '../../services/match-service';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 
 interface MatchDetailModalProps {
@@ -62,10 +63,10 @@ const MatchDetailModal: FC<MatchDetailModalProps> = ({
           setUserItem(item2);
           setOtherItem(item1);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error fetching data:', error);
         setError(
-          error.response?.data || 
+          (axios.isAxiosError<string>(error) && error.response?.data) || 
           'Failed to load match details. Please try again.'
         );
       } finally {

@@ -6,14 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faMapMarkedAlt,
-  faList,
   faFilter,
   faSearch,
   faLayerGroup,
   faArrowLeft,
-  faSpinner,
-  faExclamationTriangle,
-  faMapPin
+  faExclamationTriangle
 } from "@fortawesome/free-solid-svg-icons";
 
 const containerStyle = {
@@ -26,10 +23,12 @@ const center = {
   lng: 34.7818
 };
 
-const getLatLng = (location: any) => {
+const getLatLng = (
+  location: string | { lat?: number | string; lng?: number | string } | null | undefined
+) => {
   if (!location) return null;
   if (typeof location === "string") {
-    const match = location.match(/Lat:\s*([\d.\-]+),\s*Lng:\s*([\d.\-]+)/);
+    const match = location.match(/Lat:\s*([\d.-]+),\s*Lng:\s*([\d.-]+)/);
     if (match) {
       return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
     }
@@ -39,6 +38,7 @@ const getLatLng = (location: any) => {
     } catch {
       return null;
     }
+    return null;
   }
   if (location.lat && location.lng) {
     const lat = typeof location.lat === 'string' ? parseFloat(location.lat) : location.lat;

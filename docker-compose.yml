@@ -1,0 +1,50 @@
+# Full local stack: MongoDB + API + frontend
+#   cp backend/.env.example backend/.env   (add your Google API keys)
+#   docker compose up --build
+# Frontend: http://localhost:5173   API: http://localhost:3000   Docs: http://localhost:3000/api-docs
+services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      DB_CONNECTION: mongodb://mongo:27017/eureka
+      DOMAIN_BASE: http://localhost:3000
+      CLIENT_URL: http://localhost:5173
+      TOKEN_SECRET: ${TOKEN_SECRET:-local-dev-secret}
+      TOKEN_EXPIRATION: 1h
+      REFRESH_TOKEN_EXPIRATION: 7d
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/public
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
+  uploads:

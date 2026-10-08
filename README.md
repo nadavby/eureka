@@ -1,5 +1,7 @@
 # Eureka — AI-powered Lost & Found
 
+[![CI](https://github.com/nadavby/eureka/actions/workflows/ci.yml/badge.svg)](https://github.com/nadavby/eureka/actions/workflows/ci.yml)
+
 Eureka reunites people with lost items. Users report a **lost** or **found** item with a photo and location; the system analyzes the image with computer vision, then uses an LLM to decide whether a lost item and a found item are the same object, and notifies both owners in real time so they can chat and confirm the match.
 
 ## How matching works
@@ -38,6 +40,7 @@ The deterministic filter runs first so that only plausible pairs reach the LLM. 
 | Backend | Node.js, Express, TypeScript, MongoDB + Mongoose, Socket.IO, Multer, Swagger |
 | AI | Google Cloud Vision API, Google Gemini |
 | Testing | Jest + Supertest |
+| DevOps | Docker (multi-stage images), Docker Compose, GitHub Actions CI, GitHub Container Registry |
 
 ## Project structure
 
@@ -48,14 +51,32 @@ frontend/  React SPA
 
 ## Running locally
 
-Prerequisites: Node.js 18+, MongoDB, and Google Cloud API keys (Vision, Gemini, Maps).
+### With Docker (recommended)
+
+```bash
+cp backend/.env.example backend/.env    # add GEMINI_API_KEY and GOOGLE_CLOUD_VISION_API_KEY
+docker compose up --build
+```
+
+| Service | URL |
+|---|---|
+| Frontend (nginx) | http://localhost:5173 |
+| API | http://localhost:3000 |
+| API docs (Swagger) | http://localhost:3000/api-docs |
+| Health check | http://localhost:3000/health |
+
+MongoDB data and uploaded images are kept in named Docker volumes.
+
+### Without Docker
+
+Prerequisites: Node.js 20+, MongoDB, and Google Cloud API keys (Vision, Gemini, Maps).
 
 ```bash
 # backend
 cd backend
 cp .env.example .env      # fill in the keys
 npm install
-npm run dev               # http://localhost:3000, docs at /api-docs
+npm run dev               # http://localhost:3000
 
 # frontend
 cd frontend
@@ -64,7 +85,15 @@ npm install
 npm run dev               # http://localhost:5173
 ```
 
-Run the backend tests with `cd backend && npm test` (requires MongoDB).
+## CI/CD
+
+Every push and pull request runs [GitHub Actions](.github/workflows/ci.yml):
+
+1. **Backend:** ESLint, TypeScript type-check, and Jest integration tests against a MongoDB service container. Google AI services are mocked, so tests are deterministic and need no API keys.
+2. **Frontend:** ESLint and a production build.
+3. **Docker:** builds both images with layer caching. On `main`, images are pushed to GitHub Container Registry (`ghcr.io/nadavby/eureka-backend`, `ghcr.io/nadavby/eureka-frontend`), tagged `latest` and with the commit SHA.
+
+The backend image is a multi-stage build: TypeScript is compiled in a build stage, and the runtime stage contains only production dependencies and compiled JS, runs as a non-root user and has a health check.
 
 ## Background
 

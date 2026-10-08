@@ -1,6 +1,7 @@
 /** @format */
 
 import express, { Express } from "express";
+import path from "path";
 const app = express();
 import dotenv from "dotenv";
 dotenv.config();
@@ -14,11 +15,10 @@ import itemRoutes from "./routes/item_routes";
 import cors from "cors";
 import matchRoutes from "./routes/match_routes";
 import notificationRoutes from "./routes/notification_routes";
+import { getAllowedOrigins } from "./config/cors";
 
 const corsOptions = {
-  origin: ["http://localhost:3002", "http://localhost:5173"].concat(
-    process.env.DOMAIN_BASE ? [process.env.DOMAIN_BASE] : []
-  ),
+  origin: getAllowedOrigins(),
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept", "Referer"],
   credentials: true,
@@ -44,6 +44,11 @@ app.options("*", (req, res) => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.get("/health", (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(dbConnected ? 200 : 503).json({ status: dbConnected ? "ok" : "degraded", db: dbConnected });
+});
+
 app.use("/auth", authRoutes);
 app.use("/file", fileRoutes);
 app.use("/items", itemRoutes);
@@ -61,12 +66,11 @@ const options = {
         "REST server for lost and found items with image recognition",
     },
     servers: [
-      { url: process.env.DOMAIN_BASE },
-      { url: "https://10.10.246.118" },
-      { url: "http://10.10.246.118" },
+      { url: process.env.DOMAIN_BASE || "http://localhost:3000" },
     ],
   },
-  apis: ["./src/routes/*.ts"],
+  // Resolved relative to this file so docs work from src (ts-node) and dist (compiled JS)
+  apis: [path.join(__dirname, "routes", "*.{ts,js}")],
 };
 const specs = swaggerJsDoc(options);
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(specs));
