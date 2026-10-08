@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { ServerStatus } from "@/components/ServerStatus";
 
 /** Centered card on paper, with a manila tag edge along the top. */
 export const AuthLayout = ({ title, lead, children, footer }: { title: string; lead: string; children: ReactNode; footer: ReactNode }) => (
@@ -8,6 +9,9 @@ export const AuthLayout = ({ title, lead, children, footer }: { title: string; l
       <div className="p-6 sm:p-8">
         <h1 className="text-2xl font-bold">{title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{lead}</p>
+        <div className="mt-3 empty:hidden">
+          <ServerStatus />
+        </div>
         <div className="mt-6">{children}</div>
       </div>
     </div>

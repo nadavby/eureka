@@ -6,6 +6,7 @@ import { initSocket } from "./services/notification.socket.service";
 import { config } from "./lib/config";
 import { logger } from "./lib/logger";
 import { queue } from "./jobs";
+import { ensureVectorIndex } from "./matching/vector-index";
 
 const start = async () => {
   const app = await initApp();
@@ -19,6 +20,10 @@ const start = async () => {
 
   initSocket(server);
   queue.start();
+  if (config.VECTOR_SEARCH === "atlas") {
+    // Non-blocking: a missing index only means no candidates until Atlas finishes building it.
+    ensureVectorIndex().catch((err) => logger.error({ err }, "Could not ensure the vector search index"));
+  }
   server.listen(config.PORT, () => logger.info({ port: config.PORT }, "Server listening"));
 
   // Render sends SIGTERM on deploys and sleep: finish running jobs, then exit.
