@@ -4,6 +4,7 @@ import notificationModel from "../models/notification_model";
 import itemModel from "../models/item_model";
 import chatModel from "../models/chat_model";
 import { badRequest, forbidden, notFound } from "../lib/errors";
+import { botCounterpart, resolvableItemIds } from "../demo/bots";
 
 const isParticipant = (match: { userId1: string; userId2: string }, userId: string) =>
   match.userId1 === userId || match.userId2 === userId;
@@ -51,15 +52,18 @@ const confirmMatch = async (req: Request, res: Response) => {
   }
 
   await notificationModel.deleteMany({ matchId });
+  // In the demo, the seed bot on the other side confirms together with the visitor.
+  const bot = await botCounterpart(match, userId);
   const updated = await matchModel.findByIdAndUpdate(
     matchId,
-    { $set: { [isUser1 ? "user1Confirmed" : "user2Confirmed"]: true } },
+    { $set: { [isUser1 ? "user1Confirmed" : "user2Confirmed"]: true, ...(bot ? { user1Confirmed: true, user2Confirmed: true } : {}) } },
     { new: true }
   );
   if (!updated) throw notFound("Match not found");
 
   if (updated.user1Confirmed && updated.user2Confirmed) {
-    const itemIds = [match.item1Id, match.item2Id];
+    // Public demo items stay open for the next visitor; everything else is resolved.
+    const itemIds = await resolvableItemIds([match.item1Id, match.item2Id]);
     await itemModel.updateMany({ _id: { $in: itemIds } }, { isResolved: true });
 
     await matchModel.updateOne({ _id: matchId }, { confirmedAt: new Date() });

@@ -72,12 +72,15 @@ export const ProfilePage = () => {
   }
 
   const publicUrl = `${window.location.origin}/u/${user._id}`;
+  const readOnly = user.demoRole !== undefined;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <PageHeader title={t("profile.title")} lead={t("profile.lead")} />
       <div className="grid gap-6 md:grid-cols-[1fr_16rem]">
         <form onSubmit={onSubmit} className="space-y-5 rounded-xl border bg-card p-6" noValidate>
+          {readOnly && <p className="rounded-md bg-manila px-3 py-2 text-sm text-manila-foreground">{t("demo.readOnly")}</p>}
+          <fieldset disabled={readOnly} className="space-y-5 disabled:opacity-70">
           <div className="flex items-center gap-4">
             <Avatar className="size-16">
               {user.imgURL && <AvatarImage src={user.imgURL} alt="" />}
@@ -109,6 +112,7 @@ export const ProfilePage = () => {
             {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
             {t("common.save")}
           </Button>
+          </fieldset>
         </form>
 
         <aside className="rounded-xl border bg-card p-6 text-center">

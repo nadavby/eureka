@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <!-- light blue city bike with a wicker basket and a bell, rear fender dented, by a fence -->
+  <rect width="400" height="300" fill="#e7e2d6"/>
+  <g stroke="#b7ae9b" stroke-width="5"><line x1="20" y1="40" x2="20" y2="210"/><line x1="80" y1="40" x2="80" y2="210"/><line x1="140" y1="40" x2="140" y2="210"/><line x1="320" y1="40" x2="320" y2="210"/><line x1="380" y1="40" x2="380" y2="210"/><line x1="0" y1="70" x2="400" y2="70"/></g>
+  <ellipse cx="200" cy="262" rx="160" ry="12" fill="#000" opacity=".15"/>
+  <g fill="none" stroke="#2c333b" stroke-width="7"><circle cx="110" cy="210" r="48"/><circle cx="290" cy="210" r="48"/></g>
+  <g fill="none" stroke="#7fb3d5" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M110 210 l60 -80 h90 l30 80 M170 130 l40 80 l50 -80 M210 210 l-100 0"/>
+    <path d="M260 130 l-6 -26 h26"/>
+  </g>
+  <path d="M60 210 q50 -64 100 -18" fill="none" stroke="#7fb3d5" stroke-width="6"/>
+  <path d="M90 168 l10 6" stroke="#5d6a72" stroke-width="5"/>
+  <rect x="270" y="80" width="60" height="34" rx="6" fill="#c99a5a"/>
+  <g stroke="#a87b40" stroke-width="2"><line x1="280" y1="80" x2="280" y2="114"/><line x1="294" y1="80" x2="294" y2="114"/><line x1="308" y1="80" x2="308" y2="114"/><line x1="322" y1="80" x2="322" y2="114"/></g>
+  <circle cx="246" cy="104" r="7" fill="#c4c9cf"/>
+  <rect x="160" y="112" width="34" height="10" rx="5" fill="#7b4a2c"/>
+</svg>

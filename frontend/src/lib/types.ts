@@ -7,6 +7,8 @@ export interface User {
   /** Only present for yourself and for users you share a match with. */
   email?: string;
   phoneNumber?: string;
+  /** "visitor" for Try-the-demo accounts. */
+  demoRole?: "seed" | "visitor";
 }
 
 export type ItemType = "lost" | "found";

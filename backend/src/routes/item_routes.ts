@@ -8,7 +8,7 @@ import {
   deleteItem,
 } from "../controllers/item_controller";
 import { asyncHandler } from "../lib/async-handler";
-import { requireAuth } from "../middleware/auth";
+import { optionalAuth, requireAuth } from "../middleware/auth";
 import { uploadLimiter } from "../middleware/security";
 import { imageUpload } from "../middleware/upload";
 import { validate } from "../middleware/validate";
@@ -199,7 +199,7 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.get("/", validate({ query: listItemsQuery }), asyncHandler(getAllItems));
+router.get("/", optionalAuth, validate({ query: listItemsQuery }), asyncHandler(getAllItems));
 
 /**
  * @swagger
@@ -232,7 +232,7 @@ router.get("/", validate({ query: listItemsQuery }), asyncHandler(getAllItems));
  *       500:
  *         description: Server error
  */
-router.get("/:id", validate({ params: idParams }), asyncHandler(getItemById));
+router.get("/:id", optionalAuth, validate({ params: idParams }), asyncHandler(getItemById));
 
 /**
  * @swagger

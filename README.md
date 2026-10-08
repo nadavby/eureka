@@ -4,6 +4,12 @@
 
 Eureka reunites people with lost items. Users report a **lost** or **found** item with a photo and location. In the background, Gemini describes the object, a multimodal embedding of the photo and its description finds look-alike candidates, and a second model compares the best candidates photo-to-photo. Both owners are notified in real time and can chat to confirm.
 
+## Try it
+
+**Try the demo** on the home page signs you in as a temporary guest and opens a ready-made match: your lost wallet next to a wallet a resident found, with the reasons the AI gave. From there you can chat with the finder (they answer), confirm the match to see their contact details, or report your own item and watch it being matched against the demo world.
+
+Every guest gets a **private sandbox**: what you report or confirm is invisible to other visitors, the public demo items are never changed, and guest accounts are deleted within a day. A [nightly workflow](.github/workflows/demo-reset.yml) rebuilds the demo world. The demo illustrations were drawn for this project.
+
 ## How matching works
 
 ```
@@ -78,7 +84,7 @@ frontend/  React SPA
 ### Quick start: no database, no API keys
 
 ```bash
-cd backend && npm install && AI_FAKE=true npm run dev:memory   # API on :3000 with an in-memory MongoDB and an offline AI
+cd backend && npm install && npm run dev:demo   # API on :3000: in-memory MongoDB, offline AI, demo world seeded
 cd frontend && npm install && npm run dev                      # http://localhost:5173
 ```
 

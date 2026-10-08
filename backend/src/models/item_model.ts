@@ -27,6 +27,9 @@ export interface IItem {
   matchingError?: string;
   matchCount?: number;
   isResolved?: boolean;
+  /** Demo sandbox: visible only to sandboxOwnerId and never a matching candidate. */
+  sandbox?: boolean;
+  sandboxOwnerId?: string;
   createdAt?: Date;
 }
 
@@ -67,6 +70,8 @@ const itemSchema = new mongoose.Schema<IItem>(
     matchingError: String,
     matchCount: { type: Number, default: 0 },
     isResolved: { type: Boolean, default: false },
+    sandbox: { type: Boolean, default: false },
+    sandboxOwnerId: { type: String, index: true },
   },
   { timestamps: true }
 );
@@ -79,6 +84,7 @@ itemSchema.set("toJSON", {
     delete ret.__v;
     delete ret.embedding;
     delete ret.imagePublicId;
+    delete ret.sandboxOwnerId;
     return ret;
   },
 });

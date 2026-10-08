@@ -19,7 +19,10 @@ const uploadItem = async (req: Request, res: Response) => {
   if (!file) throw badRequest("Missing image: upload it as 'file' or 'image'");
 
   const userId = req.user!.id;
-  if (!(await userModel.exists({ _id: userId }))) throw unauthorized("User no longer exists");
+  const user = await userModel.findById(userId, { demoRole: 1 }).lean();
+  if (!user) throw unauthorized("User no longer exists");
+  // Demo visitors report into their private sandbox (still matched against the public demo items).
+  const sandbox = user.demoRole === "visitor" ? { sandbox: true, sandboxOwnerId: userId } : {};
 
   const image = await storeUpload(file, "items");
   let item;
@@ -29,6 +32,7 @@ const uploadItem = async (req: Request, res: Response) => {
       userId,
       imageUrl: image.url,
       imagePublicId: image.publicId,
+      ...sandbox,
       matchingStatus: "analyzing",
       isResolved: false,
     });
@@ -41,8 +45,12 @@ const uploadItem = async (req: Request, res: Response) => {
   res.status(201).json(item);
 };
 
+/** Demo sandbox items are visible only to the visitor they belong to. */
+const visibleTo = (viewer: string | undefined) =>
+  viewer ? { $or: [{ sandbox: { $ne: true } }, { sandboxOwnerId: viewer }] } : { sandbox: { $ne: true } };
+
 const getAllItems = async (req: Request, res: Response) => {
-  const query: Record<string, unknown> = {};
+  const query: Record<string, unknown> = { ...visibleTo(req.user?.id) };
   if (req.query.itemType) query.itemType = req.query.itemType;
   if (req.query.userId) query.userId = req.query.userId;
   if (req.query.open === "true") query.isResolved = false;
@@ -50,7 +58,7 @@ const getAllItems = async (req: Request, res: Response) => {
 };
 
 const getItemById = async (req: Request, res: Response) => {
-  const item = await itemModel.findById(req.params.id);
+  const item = await itemModel.findOne({ _id: req.params.id, ...visibleTo(req.user?.id) });
   if (!item) throw notFound("Item not found");
   res.json(item);
 };

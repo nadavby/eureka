@@ -15,6 +15,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 import { useSession } from "@/features/auth/session";
 import { useLiveItemStatus } from "@/features/items/hooks";
 import { NotificationsBell } from "@/features/notifications/NotificationsBell";
+import { DemoBanner } from "@/features/demo/DemoBanner";
 import { cn } from "@/lib/utils";
 import { LanguageMenu, ThemeMenu } from "./Preferences";
 
@@ -167,6 +168,7 @@ export const AppShell = () => {
           </div>
         </div>
       </header>
+      <DemoBanner />
       <main id="main" className="flex-1">
         <Outlet />
       </main>
