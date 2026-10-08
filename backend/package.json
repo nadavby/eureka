@@ -13,7 +13,8 @@
     "dev:memory": "ts-node --transpile-only scripts/dev-memory.ts",
     "seed:demo": "ts-node --transpile-only scripts/seed-demo.ts",
     "demo:cleanup": "ts-node --transpile-only scripts/demo-cleanup.ts",
-    "dev:demo": "cross-env AI_FAKE=true SEED_DEMO=true ts-node --transpile-only scripts/dev-memory.ts"
+    "dev:demo": "cross-env AI_FAKE=true SEED_DEMO=true ts-node --transpile-only scripts/dev-memory.ts",
+    "atlas:index": "ts-node --transpile-only scripts/atlas-index.ts"
   },
   "author": "Nadav Ben Yehonatan , Chamak Sacha",
   "license": "ISC",

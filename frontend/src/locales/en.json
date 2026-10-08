@@ -320,5 +320,9 @@
     "readOnly": "Demo accounts can't be edited.",
     "DEMO_BUSY": "The demo is busy right now. Try again in a few minutes.",
     "DEMO_UNAVAILABLE": "The demo is being prepared. Try again in a minute."
+  },
+  "server": {
+    "waking": "Waking up the server. The free host sleeps when idle; this takes about half a minute.",
+    "down": "The server isn't answering right now. Try again in a minute."
   }
 }

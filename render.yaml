@@ -1,0 +1,45 @@
+# Render Blueprint: the API as a Docker web service.
+# Create it from the Render dashboard: New > Blueprint > this repository.
+# Secrets marked "sync: false" are asked for once, when the Blueprint is created.
+services:
+  - type: web
+    name: eureka-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    # Deploy from main only after the GitHub Actions checks pass.
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VECTOR_SEARCH
+        value: atlas
+      - key: LOG_LEVEL
+        value: info
+      - key: TOKEN_SECRET
+        generateValue: true
+      - key: TOKEN_EXPIRATION
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRATION
+        value: 7d
+      - key: DB_CONNECTION
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      # The API's public URL, e.g. https://eureka-api.onrender.com (used for links it builds)
+      - key: DOMAIN_BASE
+        sync: false
+      # The frontend's URL(s) for CORS, e.g. https://eureka.vercel.app
+      - key: CLIENT_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false

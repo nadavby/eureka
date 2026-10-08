@@ -8,6 +8,7 @@ import { TiedTags } from "@/components/claim-tag/TiedTags";
 import { useSession } from "@/features/auth/session";
 import { ParticleWordmark } from "./ParticleWordmark";
 import { TryDemoButton } from "@/features/demo/TryDemoButton";
+import { ServerStatus } from "@/components/ServerStatus";
 import walletLost from "./example-lost.svg";
 import walletFound from "./example-found.svg";
 
@@ -45,6 +46,7 @@ export const LandingPage = () => {
             <div className="mt-6 flex flex-col items-center gap-2">
               <TryDemoButton variant="ghost" size="default" className="text-primary" />
               <p className="max-w-sm text-xs text-muted-foreground">{t("demo.hint")}</p>
+              <ServerStatus />
             </div>
             <p className="mt-5 text-sm text-muted-foreground">
               {t("landing.haveAccount")}{" "}

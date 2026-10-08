@@ -14,6 +14,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist
+# Atlas Vector Search index definition, applied at startup when VECTOR_SEARCH=atlas
+COPY atlas ./atlas
 # Upload directories (mount a volume here to persist files)
 RUN mkdir -p public/items public/users && chown -R node:node public
 USER node
